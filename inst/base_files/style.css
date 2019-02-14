@@ -1,0 +1,51 @@
+.table>thead>tr>th,
+.header th, thead, tbody, tr, table {
+    border: none;
+}
+table {
+    font-family: "Arial", Arial, sans-serif;
+    font-size: 10pt;
+    border-collapse: collapse;
+    padding: 0px;
+    margin: 0px;
+    /*
+    width: 100%;
+    display: block;
+    overflow: auto;
+    */
+}
+th, td {
+    text-align: center;
+    vertical-align: middle;
+    /* border: 1pt solid black; */
+    padding: 0.5ex 1.5ex;
+    margin: 0px;
+}
+th {
+    vertical-align: bottom;
+    /*background-color: #eee;*/
+    /*background-color: #ddd;*/
+}
+/*
+tbody tr:nth-child(odd) {
+    background-color: #eee;
+}
+*/
+thead>tr:first-child>th {
+    border-top: 1pt solid black;
+}
+thead>tr:last-child>th {
+    border-bottom: 1pt solid black;
+}
+tbody>tr:last-child>td {
+    border-bottom: 1pt solid black;
+}
+.paramsectionheading {
+    text-align:left;
+    padding-left: 1.5ex;
+}
+.paramlabel {
+    text-align:left;
+    padding-left: 4.5ex;
+}
+

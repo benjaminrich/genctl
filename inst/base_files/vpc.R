@@ -1,0 +1,34 @@
+#' ---
+#' title: "PLACEHOLDER"
+#' author: "PLACEHOLDER"
+#' date:   "`r Sys.Date()`"
+#' output:
+#'   html_document:
+#'     css: ../style.css
+#' ---
+
+#+ echo=FALSE
+knitr::opts_chunk$set(echo=FALSE, results='hide', fig.path="figures-vpc/", fig.width=8, fig.height=8, warning=FALSE, message=FALSE)
+#+
+
+suppressPackageStartupMessages({
+    library(genctl)
+    library(PCSmisc)
+    library(dplyr)
+    library(tidyr)
+    library(ggplot2)
+})
+
+meta <- read_meta()
+
+nmtab <- read.nonmem.csv(meta$data$nmtable)
+vpctab <- read.nonmem.csv(meta$data$vpctable)
+
+# PLACEHOLDER
+
+#' #### R session information
+
+#+ results='markup'
+sessionInfo()
+
+
