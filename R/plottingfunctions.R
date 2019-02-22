@@ -305,7 +305,8 @@ gof_resid <- function(formula, data, .relabel=relabel, leg=T, ...) {
         if (leg) {
             argsnew <- c(argsnew, list(auto.key=mykey))
         }
-        argsnew <- c(argsnew, args)
+        #argsnew <- c(argsnew, args)
+        argsnew[names(args)] <- args
     } else {
         mytheme <- latticeExtra::custom.theme(
             symbol = adjustcolor("black", 0.4),
