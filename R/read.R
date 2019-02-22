@@ -297,18 +297,18 @@ read_nm_output <- function(
             grepl("^OMEGA", names(bootstrap.data)) |
             toupper(names(bootstrap.data)) == "OFV"
 
-        bootstrap.data <- bootstrap.data[, keep]
+        bootstrap.keep <- bootstrap.data[, keep]
 
         type <- rep(c("ofv", "th", "om", "sg"), times=c(1, length(th_names),
                 ((2*length(om_names) + 1)^2 - 1)/8,
                 ((2*length(sg_names) + 1)^2 - 1)/8))
 
-        boot.fixed <- sapply(bootstrap.data, function(x) length(unique(x))) == 1
-        bootstrap.data <- bootstrap.data[, !boot.fixed, drop=F]
+        boot.fixed <- sapply(bootstrap.keep, function(x) length(unique(x))) == 1
+        bootstrap.keep <- bootstrap.keep[, !boot.fixed, drop=F]
         type <- type[!boot.fixed, drop=F]
 
         # variance-covariance to sd/cor
-        bootstrap.data[, type=="om"] <- t(apply(bootstrap.data[, type=="om", drop=F], 1, function(x) {
+        bootstrap.keep[, type=="om"] <- t(apply(bootstrap.keep[, type=="om", drop=F], 1, function(x) {
             v <- LTmat(x)
             s <- diag(1/sqrt(diag(v)))
             r <- s %*% v %*% s
@@ -317,7 +317,7 @@ read_nm_output <- function(
         }))
 
         # variance-covariance to sd/cor
-        bootstrap.data[, type=="sg"] <- t(apply(bootstrap.data[, type=="sg", drop=F], 1, function(x) {
+        bootstrap.keep[, type=="sg"] <- t(apply(bootstrap.keep[, type=="sg", drop=F], 1, function(x) {
             v <- LTmat(x)
             s <- diag(1/sqrt(diag(v)))
             r <- s %*% v %*% s
@@ -325,24 +325,26 @@ read_nm_output <- function(
             t(r)[upper.tri(r, diag=T)]
         }))
 
-        bootstrap.orig <- bootstrap.data[1,]
+        bootstrap.orig <- bootstrap.data[1, names(bootstrap.keep)]
         bootstrap.data <- bootstrap.data[-1,]
 
         success <- bootstrap.data$minimization_successful == 1
 
-        res$bootstrap$n$total <- nrow(bootstrap.data)
-        res$bootstrap$n$successful <- sum(bootstrap.data$minimization_successful)
-        res$bootstrap$n$covstep <- sum(bootstrap.data$covariance_step_successful)
-        res$bootstrap$n$nearboundary <- sum(bootstrap.data$estimate_near_boundary)
+        res$bootstrap$convergence <- bootstrap.data[,
+            c("minimization_successful", "covariance_step_successful",
+                "estimate_near_boundary", "rounding_errors")]
+        res$bootstrap$n$total          <- nrow(bootstrap.data)
+        res$bootstrap$n$successful     <- sum(bootstrap.data$minimization_successful)
+        res$bootstrap$n$covstep        <- sum(bootstrap.data$covariance_step_successful)
+        res$bootstrap$n$nearboundary   <- sum(bootstrap.data$estimate_near_boundary)
         res$bootstrap$n$roundingerrors <- sum(bootstrap.data$rounding_errors)
 
-        res$bootstrap$minsuccess <- success
-        res$bootstrap$data       <- bootstrap.data
-        res$bootstrap$orig       <- bootstrap.orig
-        res$bootstrap$median     <- sapply(res$bootstrap$data[success,], median, na.rm=T)
-        res$bootstrap$ci         <- lapply(res$bootstrap$data[success,], quantile, probs=c(0.025, 0.975))
-        res$bootstrap$ci         <- as.data.frame(res$bootstrap$ci, optional=T)
-        res$bootstrap$bias       <- 100*(res$bootstrap$median - res$bootstrap$orig)/res$bootstrap$orig
+        res$bootstrap$data        <- bootstrap.keep
+        res$bootstrap$orig        <- bootstrap.orig
+        res$bootstrap$median      <- sapply(res$bootstrap$data[success,], median, na.rm=T)
+        res$bootstrap$ci          <- lapply(res$bootstrap$data[success,], quantile, probs=c(0.025, 0.975))
+        res$bootstrap$ci          <- as.data.frame(res$bootstrap$ci, optional=T)
+        res$bootstrap$bias        <- 100*(res$bootstrap$median - res$bootstrap$orig)/res$bootstrap$orig
 
 
         #res$bootstrap$all    <- all_boot
