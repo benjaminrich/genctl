@@ -46,18 +46,19 @@ partab <- function(nm_output) {
             a1 <- match(m1, om_names)
             a2 <- match(m2, om_names)
             if (!is.na(a1) && !is.na(a2)) {
+                est <- nm_output$om_cor[a1,a2]
+                se <- nm_output$se$om_cor[a1,a2]
                 fixed <- nm_output$fixed$om_cor[a1,a2]
-                if (!fixed || nm_output$om_cor[a1,a2] > 0) {
-                    est <- nm_output$om_cor[a1,a2]
-                    se <- nm_output$se$om_cor[a1,a2]
-                    if (have.bootstrap) {
-                        boot.re <- paste0("OMEGA\\D", max(a1, a2), "\\D", min(a1, a2), "($|\\D)")
-                        boot.name <- grep(boot.re, names(nmout$bootstrap$median), ignore.case=T, value=T)
-                        if (length(boot.name) == 1) {
-                            boot.median <- nm_output$bootstrap$median[[boot.name]]
-                            boot.lci <- nm_output$bootstrap$ci[[boot.name]][1]
-                            boot.uci <- nm_output$bootstrap$ci[[boot.name]][2]
-                        }
+                if (fixed) {
+                    se <- NA
+                }
+                if (have.bootstrap) {
+                    boot.re <- paste0("OMEGA\\D", max(a1, a2), "\\D", min(a1, a2), "($|\\D)")
+                    boot.name <- grep(boot.re, names(nmout$bootstrap$median), ignore.case=T, value=T)
+                    if (length(boot.name) == 1) {
+                        boot.median <- nm_output$bootstrap$median[[boot.name]]
+                        boot.lci <- nm_output$bootstrap$ci[[boot.name]][1]
+                        boot.uci <- nm_output$bootstrap$ci[[boot.name]][2]
                     }
                 }
             } else {
@@ -68,18 +69,19 @@ partab <- function(nm_output) {
             a1 <- regmatches(name, re)[[1]][2]
             a2 <- regmatches(name, re)[[1]][3]
             if (a1 %in% dimnames(nm_output$om_cov)[[1]] && a2 %in% dimnames(nm_output$om_cov)[[2]]) {
+                est <- nm_output$om_cov[a1,a2]
+                se <- nm_output$se$om_cov[a1,a2]
                 fixed <- nm_output$fixed$om_cov[a1,a2]
-                if (!fixed || nm_output$om_cov[a1,a2] > 0) {
-                    est <- nm_output$om_cov[a1,a2]
-                    se <- nm_output$se$om_cov[a1,a2]
-                    if (have.bootstrap) {
-                        boot.re <- paste0("OMEGA\\D", max(a1, a2), "\\D", min(a1, a2), "($|\\D)")
-                        boot.name <- grep(boot.re, names(nmout$bootstrap$median), ignore.case=T, value=T)
-                        if (length(boot.name) == 1) {
-                            boot.median <- nm_output$bootstrap$median[[boot.name]]
-                            boot.lci <- nm_output$bootstrap$ci[[boot.name]][1]
-                            boot.uci <- nm_output$bootstrap$ci[[boot.name]][2]
-                        }
+                if (fixed) {
+                    se <- NA
+                }
+                if (have.bootstrap) {
+                    boot.re <- paste0("OMEGA\\D", max(a1, a2), "\\D", min(a1, a2), "($|\\D)")
+                    boot.name <- grep(boot.re, names(nmout$bootstrap$median), ignore.case=T, value=T)
+                    if (length(boot.name) == 1) {
+                        boot.median <- nm_output$bootstrap$median[[boot.name]]
+                        boot.lci <- nm_output$bootstrap$ci[[boot.name]][1]
+                        boot.uci <- nm_output$bootstrap$ci[[boot.name]][2]
                     }
                 }
             } else {
@@ -322,7 +324,9 @@ generate.parameter.table.HTML <- function(
             cat(parameter.estimate.table.section(label, ncolumns=ncolumns), '\n')
         }
         args <- c(partab[i,], list(na=na, digits=digits))
-        cat(do.call(parameter.estimate.table.row, args), '\n')
+        if (!args$fixed || args$type=="Structural") {
+            cat(do.call(parameter.estimate.table.row, args), '\n')
+        }
     }
 
     cat('</tbody>
