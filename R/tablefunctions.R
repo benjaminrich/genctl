@@ -342,6 +342,8 @@ generate.omega.matrix.HTML <- function(omega, digits=3) {
     if (!is.matrix(omega) || !(mode(omega) == "numeric")) {
         stop("omega must be a numeric matrix")
     }
+    keep <- apply(omega, 1, function(x) any(x > 0))
+    omega <- omega[keep, keep]
     x <- p(omega, digits)
     attributes(x) <- attributes(omega)
 
