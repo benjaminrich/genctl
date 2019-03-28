@@ -91,8 +91,8 @@ eta_splom <- function(x, eta.sd=NULL, ...) {
             dy <- dy[o]
             panel.lines(dx, dy, col=adjustcolor(2, 0.4))
             panel.text(mean(xlim), mean(ylim), args$varname)
-            if (!is.null(omega)) {
-                om <- as.numeric(omega[1])
+            if (!is.null(eta.sd)) {
+                om <- as.numeric(eta.sd[1])
                 dy2 <- ylim[1] + 0.95*diff(ylim)*(dnorm(dx, 0, om)/max(d$y))
                 panel.lines(dx, dy2, col=adjustcolor(1, 0.4))
                 shrinkage <- 1 - sd(x)/om
