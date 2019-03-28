@@ -267,7 +267,7 @@ generate.parameter.table.HTML <- function(
     digits=3) {
 
     partab <- partab(nm_output)
-    #parsplit <- split(partab, partab$type)
+    partab <- subset(partab, !(fixed & est==0))
 
     have.bootstrap = !is.null(partab$boot.median)
 
@@ -324,9 +324,7 @@ generate.parameter.table.HTML <- function(
             cat(parameter.estimate.table.section(label, ncolumns=ncolumns), '\n')
         }
         args <- c(partab[i,], list(na=na, digits=digits))
-        if (!args$fixed || args$type=="Structural") {
-            cat(do.call(parameter.estimate.table.row, args), '\n')
-        }
+        cat(do.call(parameter.estimate.table.row, args), '\n')
     }
 
     cat('</tbody>
