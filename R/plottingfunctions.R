@@ -121,7 +121,7 @@ eta_splom <- function(x, eta.sd=NULL, ...) {
 #' @import latticeExtra
 #' @import RColorBrewer
 #' @export
-eta_boxplot <- function(x, eta.df, title="", rot=0, right.padding=6, ...) {
+eta_boxplot <- function(x, eta.df, title="", rot=0, right.padding=6, coding=NULL, ...) {
     myprepanel <- function (x, y, ...) 
     {
         ylim <- max(abs(y), na.rm=TRUE)
@@ -150,9 +150,14 @@ eta_boxplot <- function(x, eta.df, title="", rot=0, right.padding=6, ...) {
         x <- factor(x, levels=c(levels(x), "Missing"))
         x[is.na(x)] <- "Missing"
     }
-    lab <- sprintf("%s (n=%d)", levels(x), table(x))
+    if (is.null(coding)) {
+        lab <- sprintf("%s (n=%d)", levels(x), table(x))
+        myscales <- list(x=list(rot=rot), relation="free")
+    } else {
+        lab <- sprintf("%s: %s (n=%d)", coding[1:nlevels(x)], levels(x), table(x))
+        myscales <- list(labels=coding[1:nlevels(x)], relation="free")
+    }
     mykey <- list(space="top", text=list(lab, cex=0.8), title=title, cex.title=1.2)
-    myscales <- list(x=list(rot=rot), relation="free")
     mytheme <- list(strip.background=list(col="lightgrey"))
     mystrip <- strip.custom(par.strip.text=list(cex=0.7))
     f <- as.formula(paste(paste(names(eta.df), collapse="+"), "~ x"))
