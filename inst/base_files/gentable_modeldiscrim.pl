@@ -93,6 +93,8 @@ for my $i (0..$#{$mod}) {
             $converged = 1 if /MINIMIZATION SUCCESSFUL/;
             $converged = 2 if /HOWEVER, PROBLEMS OCCURRED WITH THE MINIMIZATION/;
             $converged = 1 if /OPTIMIZATION WAS COMPLETED/;
+            $converged = 1 if /BURN-IN WAS NOT TESTED FOR CONVERGENCE/;
+            $converged = 1 if /REDUCED STOCHASTIC PORTION WAS COMPLETED/;                                     
         }
     }
 
@@ -127,7 +129,7 @@ for my $i (0..$#{$mod}) {
 
             $fields[$j] =~ s/[^a-zA-Z0-9_]/_/g;
 
-            if ($fields[$j] eq 'OBJ') {
+            if ($fields[$j] eq 'OBJ' or $fields[$j] eq 'MCMCOBJ' or $fields[$j] eq 'SAEMOBJ') {
                 my $mof = $final[$j];
                 $mof = Math::BigFloat->new($mof);
                 $mof->precision(-3);
