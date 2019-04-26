@@ -20,8 +20,9 @@ partab <- function(nm_output) {
 
     for (i in 1:nrow(partab)) {
 
-        name <- partab$name[i]
-        trans <- partab$trans[i]
+        `%||%` <- function(x, y) { if (is.null(x) || is.na(x)) y else x }
+        name <- partab$name[i] %||% NA
+        trans <- partab$trans[i] %||% NA
 
         if (have.bootstrap) {
             boot.median <- NA
