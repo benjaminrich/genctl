@@ -4,7 +4,7 @@
 \alias{eta_splom}
 \title{Scatterplot matrix with correlations, densities and LOESS smoothers.}
 \usage{
-eta_splom(x, eta.sd = NULL, ...)
+eta_splom(x, eta.sd = NULL, loess = "black", ...)
 }
 \description{
 Scatterplot matrix with correlations, densities and LOESS smoothers.

@@ -3,7 +3,7 @@
 #' @import latticeExtra
 #' @import RColorBrewer
 #' @export
-eta_splom <- function(x, eta.sd=NULL, ...) {
+eta_splom <- function(x, eta.sd=NULL, loess="black", ...) {
     mysuperpanel <- function(z, ...) {
         nvar <- length(z)
         mydiagpanel <- function(x, i, j, ...) {
@@ -47,7 +47,9 @@ eta_splom <- function(x, eta.sd=NULL, ...) {
             #panel.splom(x, y, pch=16, col=adjustcolor(1, 0.2))
             #panel.loess(x, y, lwd=2, col=2)
             panel.splom(x, y, ...)
-            panel.loess(x, y, lwd=2, col="black")
+            if (!is.null(loess)) {
+                panel.loess(x, y, lwd=2, col=loess)
+            }
             otp <- tp <- trellis.par.get()
             tp$superpose.line$col <- 2
             tp$superpose.line$lwd <- 2
@@ -194,165 +196,186 @@ eta_boxplot <- function(x, eta.df, title="", rot=0, right.padding=6, coding=NULL
 #' @import latticeExtra
 #' @import RColorBrewer
 #' @export
-gof_ident <- function(formula, data, xylim, .relabel=relabel, leg=T, ...) {
+gof_ident <- function(formula, data, groups=NULL, xylim=NULL, logxy=F, limxf=0.05, legend=!is.null(groups), loess="black", ...) {
     mysuperpose <- function(x, y, ...) {
         panel.superpose(x, y, ...)
         panel.abline(0, 1, lty=1, lwd=1, col="gray30")
-        panel.loess(x, y, lwd=3, col="black")
-        otp <- tp <- trellis.par.get()
-        tp$superpose.line$col <- 1:2
-        tp$superpose.line$lwd <- 2
-        trellis.par.set(theme=tp)
-        panel.key("LOESS", col="black", corner=c(1,0), lines=TRUE, points=FALSE, cex=0.7, size=3, between=1)
-        trellis.par.set(theme=otp) # Reset
+        if (!is.null(loess)) {
+            panel.loess(x, y, lwd=3, col=loess)
+        }
     }
     mypanel <- function(x, y, subscripts, ...) {
-        #panel.points(x, y, pch=16, col=adjustcolor(1, 0.2))
         panel.points(x, y, ...)
-        #cwres <- data$cwres[subscripts]
-        #id <- data$id[subscripts]
-        #highcwres <- abs(cwres) > 3.5
-        #highcwres.col <- "firebrick"
-        #panel.text(x[highcwres], y[highcwres], id[highcwres], cex=0.7, col=highcwres.col)
-    }
-    #xyplot(formula, data, aspect="iso", xlim=xylim, ylim=xylim, panel=mypanel, subscripts=TRUE, ...)
-    args <- list(...)
-    if (!is.null(args$xlab) && args$xlab %in% names(.relabel)) {
-        args$xlab <- as.character(mapping(.relabel)(args$xlab))
-    }
-    if (!is.null(args$ylab) && args$ylab %in% names(.relabel)) {
-        args$ylab <- as.character(mapping(.relabel)(args$ylab))
+        panel.abline(0, 1, lty=1, lwd=1, col="gray30")
+        if (!is.null(loess)) {
+            panel.loess(x, y, lwd=3, col=loess)
+        }
     }
     mystrip <- strip.custom(par.strip.text=list(cex=0.7))
-    if (!is.null(args$groups)) {
-        mykey <- list(space="bottom", columns=2, lines.title=3, title=" ")
+
+    groups <- eval(substitute(groups), data, parent.frame())
+
+    argsnew <- list()
+
+    argsnew$x            <- formula
+    argsnew$data         <- data
+    argsnew$panel        <- mypanel
+    argsnew$subscripts   <- TRUE
+    argsnew$aspect       <- "iso"
+    argsnew$strip        <- mystrip
+
+    mf <- model.frame(formula, data)
+    if (is.null(xylim)) {
+        xylim <- range(unlist(mf))
+    }
+    argsnew$xlim <- xylim
+    argsnew$ylim <- xylim
+
+    xlab <- table1::label(mf[[2]])
+    ylab <- table1::label(mf[[1]])
+
+    if (!is.null(xlab)) {
+        argsnew$xlab <- xlab
+    }
+    if (!is.null(ylab)) {
+        argsnew$ylab <- ylab
+    }
+
+    if (!is.null(groups)) {
         mytheme <- latticeExtra::custom.theme(
             symbol = adjustcolor(RColorBrewer::brewer.pal(8, "Dark2"), 0.7),
-            pch    = 16,
-            cex    = 0.5)
-        mytheme$strip.background <- list(col="lightgrey")
-        argsnew <- c(list(formula, data, aspect="iso", xlim=xylim, ylim=xylim,
-                panel=mysuperpose, panel.groups=mypanel, subscripts=TRUE,
-                strip=mystrip, par.settings=mytheme))
-        if (leg) {
-            argsnew <- c(argsnew, list(auto.key=mykey))
+            pch    = 16, cex=1)
+
+        argsnew$groups       <- groups
+        argsnew$panel        <- mysuperpose
+        argsnew$panel.groups <- panel.points
+        if (legend) {
+            ngroups <- nlevels(as.factor(groups))
+            mykey <- list(space="bottom", lines.title=3, title=" ", columns=min(ngroups, 5))
+            argsnew$auto.key <- mykey
         }
-        argsnew <- c(argsnew, args)
     } else {
-        #mytheme <- list(strip.background=list(col="lightgrey"))
         mytheme <- latticeExtra::custom.theme(
             symbol = adjustcolor("black", 0.4),
             pch    = 16)
-        mytheme$strip.background <- list(col="lightgrey")
-        argsnew <- c(list(formula, data, aspect="iso", xlim=xylim, ylim=xylim,
-                panel=mypanel, subscripts=TRUE,
-                strip=mystrip, par.settings=mytheme))
-        argsnew <- c(argsnew, args)
     }
+    mytheme$strip.background <- list(col="lightgrey")
+    #argsnew$par.settings <- mytheme
+
+    limxf <- rep(limxf, length.out=2)
+    if (logxy) {
+        argsnew$scales$y$log <- 10
+        argsnew$scales$x$log <- 10
+        argsnew$yscale.components=yscale.components.log10ticks
+        argsnew$xscale.components=xscale.components.log10ticks
+        argsnew$xlim <- exp(log(argsnew$xlim) + limxf*c(-1, 1)*diff(log(argsnew$xlim)))
+    } else {
+        argsnew$xlim <- argsnew$xlim + limxf*c(-1, 1)*diff(argsnew$xlim)
+    }
+    argsnew$ylim <- argsnew$xlim
+
+    args <- list(...)
+    argsnew[names(args)] <- args
+
     do.call(xyplot, argsnew)
 }
-
 
 #' Residual GOF plot
 #' @import lattice
 #' @import latticeExtra
 #' @import RColorBrewer
 #' @export
-gof_resid <- function(formula, data, .relabel=relabel, leg=T, ...) {
+gof_resid <- function(formula, data, groups=NULL, xlim=NULL, ylim=NULL, logx=F, limxf=0.05, legend=!is.null(groups), loess="black", ...) {
     mysuperpose <- function(x, y, ...) {
         panel.superpose(x, y, ...)
         panel.abline(h=0, lty=1, lwd=2, col="gray30")
         panel.abline(h=c(-4, -2, 2, 4), lty=4, lwd=2, col="gray30")
-        panel.loess(x, y, lwd=3, col="black")
-        otp <- tp <- trellis.par.get()
-        tp$superpose.line$col <- 1:2
-        tp$superpose.line$lwd <- 2
-        trellis.par.set(theme=tp)
-        panel.key("LOESS", col="black", corner=c(1,0), lines=TRUE, points=FALSE, cex=0.7, size=3, between=1)
-        trellis.par.set(theme=otp) # Reset
+        if (!is.null(loess)) {
+            panel.loess(x, y, lwd=3, col=loess)
+        }
     }
     mypanel <- function(x, y, subscripts, ...) {
         panel.points(x, y, ...)
-        #panel.abline(h=0, lty=1, lwd=2, col=1)
-        #panel.abline(h=c(-4, -2, 2, 4), lty=4, lwd=2, col=adjustcolor(1, 0.4))
-        #panel.loess(x, y, lwd=2, col=2)
-        #cwres <- data$cwres[subscripts]
-        #id <- data$id[subscripts]
-        #highcwres <- abs(cwres) > 3.5
-        #highcwres.col <- "firebrick"
-        #panel.text(x[highcwres], y[highcwres], id[highcwres], cex=0.7, col=highcwres.col)
-        #otp <- tp <- trellis.par.get()
-        #tp$superpose.line$col <- 2
-        #tp$superpose.line$lwd <- 2
-        #trellis.par.set(theme=tp)
-        #panel.key(c("LOESS"), corner=c(1,0), lines=TRUE, points=FALSE, cex=0.7, size=3, between=1)
-        #trellis.par.set(theme=otp) # Reset
-    }
-    #xyplot(formula, data, aspect="fill", panel=mypanel, subscripts=TRUE, ...)
-    args <- list(...)
-    if (!is.null(args$xlab) && args$xlab %in% names(.relabel)) {
-        args$xlab <- as.character(mapping(.relabel)(args$xlab))
-    }
-    if (!is.null(args$ylab) && args$ylab %in% names(.relabel)) {
-        args$ylab <- as.character(mapping(.relabel)(args$ylab))
+        panel.abline(h=0, lty=1, lwd=2, col="gray30")
+        panel.abline(h=c(-4, -2, 2, 4), lty=4, lwd=2, col="gray30")
+        if (!is.null(loess)) {
+            panel.loess(x, y, lwd=3, col=loess)
+        }
     }
     mystrip <- strip.custom(par.strip.text=list(cex=0.7))
-    if (!is.null(args$groups)) {
-        mykey <- list(space="bottom", columns=2, lines.title=3, title=" ")
+
+    groups <- eval(substitute(groups), data, parent.frame())
+
+    argsnew <- list()
+
+    argsnew$x            <- formula
+    argsnew$data         <- data
+    argsnew$panel        <- mypanel
+    argsnew$subscripts   <- TRUE
+    argsnew$aspect       <- "fill"
+    argsnew$strip        <- mystrip
+
+    mf <- model.frame(formula, data)
+    if (is.null(xlim)) {
+        xlim <- range(mf[[2]])
+    }
+    if (is.null(ylim)) {
+        ylim <- range(mf[[1]])
+        if (ylim[1] >= 0) {
+            ylim[1] <- 0
+            ylim[2] <- max(ylim[2], 3)
+        } else {
+            ylim <- c(-1, 1)*max(abs(ylim), 3)
+        }
+    }
+    argsnew$xlim <- xlim
+    argsnew$ylim <- ylim
+
+    xlab <- table1::label(mf[[2]])
+    ylab <- table1::label(mf[[1]])
+
+    if (!is.null(xlab)) {
+        argsnew$xlab <- xlab
+    }
+    if (!is.null(ylab)) {
+        argsnew$ylab <- ylab
+    }
+
+    if (!is.null(groups)) {
         mytheme <- latticeExtra::custom.theme(
             symbol = adjustcolor(RColorBrewer::brewer.pal(8, "Dark2"), 0.7),
-            pch    = 16,
-            cex    = 0.5)
-        mytheme$strip.background <- list(col="lightgrey")
-        argsnew <- c(list(formula, data, aspect="fill",
-                panel=mysuperpose, panel.groups=mypanel, subscripts=TRUE,
-                strip=mystrip, par.settings=mytheme))
-        if (leg) {
-            argsnew <- c(argsnew, list(auto.key=mykey))
+            pch    = 16, cex=1)
+
+        argsnew$groups       <- groups
+        argsnew$panel        <- mysuperpose
+        argsnew$panel.groups <- panel.points
+        if (legend) {
+            ngroups <- nlevels(as.factor(groups))
+            mykey <- list(space="bottom", lines.title=3, title=" ", columns=min(ngroups, 5))
+            argsnew$auto.key <- mykey
         }
-        #argsnew <- c(argsnew, args)
-        argsnew[names(args)] <- args
     } else {
         mytheme <- latticeExtra::custom.theme(
             symbol = adjustcolor("black", 0.4),
             pch    = 16)
-        mytheme$strip.background <- list(col="lightgrey")
-        argsnew <- c(list(formula, data, aspect="fill",
-                panel=mypanel, subscripts=TRUE,
-                strip=mystrip, par.settings=mytheme))
-        argsnew <- c(argsnew, args)
     }
-    do.call(xyplot, argsnew)
-}
+    mytheme$strip.background <- list(col="lightgrey")
+    #argsnew$par.settings <- mytheme
 
-#' General scatterplots with LOESS smoother
-#' @import lattice
-#' @import latticeExtra
-#' @import RColorBrewer
-#' @export
-myxyplot <- function(formula, data, .relabel=relabel, ...) {
-    mypanel <- function(x, y, subscripts, ...) {
-        panel.points(x, y, pch=16, col=adjustcolor(1, 0.2))
-        panel.loess(x, y, lwd=2, col=2)
-        otp <- tp <- trellis.par.get()
-        tp$superpose.line$col <- 2
-        tp$superpose.line$lwd <- 2
-        trellis.par.set(theme=tp)
-        panel.key(c("LOESS"), corner=c(1,0), lines=TRUE, points=FALSE, cex=0.7, size=3, between=1)
-        trellis.par.set(theme=otp) # Reset
+    limxf <- rep(limxf, length.out=3)
+    if (logx) {
+        argsnew$scales$x$log <- 10
+        argsnew$xscale.components=xscale.components.log10ticks
+        argsnew$xlim <- exp(log(argsnew$xlim) + limxf[1:2]*c(-1, 1)*diff(log(argsnew$xlim)))
+    } else {
+        argsnew$xlim <- argsnew$xlim + limxf[1:2]*c(-1, 1)*diff(argsnew$xlim)
     }
-    #xyplot(formula, data, aspect="fill", panel=mypanel, subscripts=TRUE, ...)
+    argsnew$ylim <- argsnew$ylim + limxf[3]*c(-1, 1)*diff(argsnew$ylim)
+
+
     args <- list(...)
-    if (!is.null(args$xlab) && args$xlab %in% names(.relabel)) {
-        args$xlab <- as.character(mapping(.relabel)(args$xlab))
-    }
-    if (!is.null(args$ylab) && args$ylab %in% names(.relabel)) {
-        args$ylab <- as.character(mapping(.relabel)(args$ylab))
-    }
-    mytheme <- list(strip.background=list(col="lightgrey"))
-    mystrip <- strip.custom(par.strip.text=list(cex=0.7))
-    argsnew <- c(list(formula, data, aspect="fill", panel=mypanel, subscripts=TRUE,
-            strip=mystrip, par.settings=mytheme), args)
+    argsnew[names(args)] <- args
+
     do.call(xyplot, argsnew)
 }
 

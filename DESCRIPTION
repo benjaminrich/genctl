@@ -9,4 +9,4 @@ License: GPL-3
 Imports: utils,grid,gridExtra,lattice,latticeExtra,RColorBrewer,table1
 Suggests: knitr,shiny
 VignetteBuilder: knitr
-RoxygenNote: 6.1.0
+RoxygenNote: 6.1.1
