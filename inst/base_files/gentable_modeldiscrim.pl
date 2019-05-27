@@ -296,7 +296,7 @@ for my $i (0..$#{$allmod->{'models'}}) {
             $allmod->{'models'}[$i]{'dDF'} = $delta_df;
             #print "$delta_df\n";
 
-            if ($allmod->{'models'}[$i]{'dMOF'} < 0) {
+            if ($allmod->{'models'}[$i]{'dMOF'} < 0 and $delta_df > 0) {
                 my $pvalue = 1.0 - pchisq(-1.0 * $allmod->{'models'}[$i]{'dMOF'}, $delta_df);
                 #if ($pvalue < 0.001) {
                 #    $pvalue = "< 0.001";
