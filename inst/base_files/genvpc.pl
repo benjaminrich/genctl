@@ -219,11 +219,11 @@ for my $i (0..$#{$mod}) {
 
     for my $l (split("\n", $intermediate)) {
         $l =~ s/(\$DATA\s+)(\S+)/$1..\/$2/g;
-        $l =~ s/\bTHETA\[(\w+?)\]/THETA($1)/ge;
-        $l =~ s/\bETA\[(\w+?)\]/ETA($1)/ge;
-        $l =~ s/\bMU_\[(\w+?)\]/MU_($1)/ge;
-        $l =~ s/\bEPS\[(\w+?)\]/EPS($1)/ge;
-        $l =~ s/\bSIGMA\[(\w+?)\]/SIGMA($1)/ge;
+        $l =~ s/\bTHETA\[\s*(\w+?)\s*\]/THETA($1)/ge;
+        $l =~ s/\bETA\[\s*(\w+?)\s*\]/ETA($1)/ge;
+        $l =~ s/\bMU_\[\s*(\w+?)\s*\]/MU_($1)/ge;
+        $l =~ s/\bEPS\[\s*(\w+?)\s*\]/EPS($1)/ge;
+        $l =~ s/\bSIGMA\[\s*(\w+?)\s*\]/SIGMA($1)/ge;
         print FINAL "$l\n";
     }
 
