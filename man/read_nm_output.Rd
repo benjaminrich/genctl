@@ -17,7 +17,10 @@ read_nm_output(rundir = getwd(),
   sprintf("raw_results_\%s.csv", runname)),
   meta = read_meta(file.path(rundir, "meta.yaml")),
   th_names = meta$namemap$theta, om_names = meta$namemap$omega,
-  sg_names = meta$namemap$sigma, ...)
+  sg_names = meta$namemap$sigma, use.vcov = FALSE, ...)
+}
+\arguments{
+\item{use.vcov}{Should the default OMEGA and SIGMA be on the variance/covariance scale instead of the SD/correlation scale?}
 }
 \description{
 Read NONMEM output.

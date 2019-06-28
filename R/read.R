@@ -9,6 +9,7 @@ read_meta <- function(meta.file="meta.yaml") {
 }
 
 #' Read NONMEM output.
+#' @param use.vcov Should the default OMEGA and SIGMA be on the variance/covariance scale instead of the SD/correlation scale?
 #' @export
 read_nm_output <- function(
     rundir       = getwd(),
@@ -26,6 +27,7 @@ read_nm_output <- function(
     th_names     = meta$namemap$theta,
     om_names     = meta$namemap$omega,
     sg_names     = meta$namemap$sigma,
+    use.vcov     = FALSE,
     ...) {
 
     res <- list()
@@ -77,8 +79,13 @@ read_nm_output <- function(
             sg_cor <- LTmat(as.numeric(sg_cor))
             dimnames(sg_cor) <- list(sg_names, sg_names)
 
-            om <- diag(om_cor)
-            sg <- diag(sg_cor)
+            if (use.vcov) {
+                om <- diag(om_cov)
+                sg <- diag(sg_cov)
+            } else {
+                om <- diag(om_cor)
+                sg <- diag(sg_cor)
+            }
 
             all <- c(th, om, sg)
 
@@ -114,8 +121,13 @@ read_nm_output <- function(
             sg_cor_fix <- LTmat(as.numeric(sg_cor_fix)) ==1
             dimnames(sg_cor_fix) <- list(sg_names, sg_names)
 
-            om_fix <- diag(om_cor_fix)
-            sg_fix <- diag(sg_cor_fix)
+            if (use.vcov) {
+                om_fix <- diag(om_cov_fix)
+                sg_fix <- diag(sg_cov_fix)
+            } else {
+                om_fix <- diag(om_cor_fix)
+                sg_fix <- diag(sg_cor_fix)
+            }
 
             all_fix <- c(th_fix, om_fix, sg_fix)
 
@@ -155,8 +167,13 @@ read_nm_output <- function(
             sg_cor_se[sg_fix] <- NA
             dimnames(sg_cor_se) <- list(sg_names, sg_names)
 
-            om_se <- diag(om_cor_se)
-            sg_se <- diag(sg_cor_se)
+            if (use.vcov) {
+                om_se <- diag(om_cov_se)
+                sg_se <- diag(sg_cov_se)
+            } else {
+                om_se <- diag(om_cor_se)
+                sg_se <- diag(sg_cor_se)
+            }
 
             all_se <- c(th_se, om_se, sg_se)
 
@@ -307,23 +324,25 @@ read_nm_output <- function(
         bootstrap.keep <- bootstrap.keep[, !boot.fixed, drop=F]
         type <- type[!boot.fixed, drop=F]
 
-        # variance-covariance to sd/cor
-        bootstrap.keep[, type=="om"] <- t(apply(bootstrap.keep[, type=="om", drop=F], 1, function(x) {
-            v <- LTmat(x)
-            s <- diag(1/sqrt(diag(v)))
-            r <- s %*% v %*% s
-            diag(r) <- sqrt(diag(v))
-            t(r)[upper.tri(r, diag=T)]
-        }))
+        if (!use.vcov) {
+            # variance-covariance to sd/cor
+            bootstrap.keep[, type=="om"] <- t(apply(bootstrap.keep[, type=="om", drop=F], 1, function(x) {
+                v <- LTmat(x)
+                s <- diag(1/sqrt(diag(v)))
+                r <- s %*% v %*% s
+                diag(r) <- sqrt(diag(v))
+                t(r)[upper.tri(r, diag=T)]
+            }))
 
-        # variance-covariance to sd/cor
-        bootstrap.keep[, type=="sg"] <- t(apply(bootstrap.keep[, type=="sg", drop=F], 1, function(x) {
-            v <- LTmat(x)
-            s <- diag(1/sqrt(diag(v)))
-            r <- s %*% v %*% s
-            diag(r) <- sqrt(diag(v))
-            t(r)[upper.tri(r, diag=T)]
-        }))
+            # variance-covariance to sd/cor
+            bootstrap.keep[, type=="sg"] <- t(apply(bootstrap.keep[, type=="sg", drop=F], 1, function(x) {
+                v <- LTmat(x)
+                s <- diag(1/sqrt(diag(v)))
+                r <- s %*% v %*% s
+                diag(r) <- sqrt(diag(v))
+                t(r)[upper.tri(r, diag=T)]
+            }))
+        }
 
         bootstrap.orig <- bootstrap.data[1, names(bootstrap.keep)]
         bootstrap.data <- bootstrap.data[-1,]
