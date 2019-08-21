@@ -138,15 +138,15 @@ eta_splom <- function(x, eta.sd=NULL, loess="black", ...) {
 #' @import latticeExtra
 #' @import RColorBrewer
 #' @export
-eta_boxplot <- function(x, eta.df, title="", rot=0, right.padding=6, coding=NULL, ...) {
+eta_boxplot <- function(x, eta.df, title="", rot=0, coding=NULL, ...) {
     myprepanel <- function (x, y, ...) 
     {
         ylim <- max(abs(y), na.rm=TRUE)
         ylim <- 1.05*ylim
         list(ylim=c(-ylim, ylim))
     }
-    mysuperpose <- function(x, y, ...) {
-        panel.superpose(x, y, ...)
+    myboxplot <- function(x, y, ...) {
+        x <- as.numeric(x)
         panel.abline(h=0, col=adjustcolor(1, 0.3), lwd=2)
         s <- tapply(y, x, boxplot.stats)
         width <- 0.7
@@ -158,9 +158,17 @@ eta_boxplot <- function(x, eta.df, title="", rot=0, right.padding=6, coding=NULL
             panel.segments(i, s[[i]]$stats[c(1,4)], i, s[[i]]$stats[c(2,5)], col=adjustcolor(1, 0.5))
         }
     }
-    mypanel <- function(x, y, ...) {
-        #panel.points(jitter((1:nlevels(x))[x], 0.2), y, ...)
+    myjitter <- function(x, y, ...) {
+        x <- as.numeric(x)
         panel.points(jitter(x, 0.2), y, ...)
+    }
+    mysuperpose <- function(x, y, ...) {
+        panel.superpose(x, y, ...)
+        myboxplot(x, y, ...)
+    }
+    mypanel <- function(x, y, ...) {
+        myboxplot(x, y, ...)
+        myjitter(x, y, ...)
     }
     args <- list(...)
     if (any(is.na(x))) {
@@ -174,8 +182,6 @@ eta_boxplot <- function(x, eta.df, title="", rot=0, right.padding=6, coding=NULL
         lab <- sprintf("%s: %s (n=%d)", coding[1:nlevels(x)], levels(x), table(x))
         myscales <- list(labels=coding[1:nlevels(x)], relation="free")
     }
-    mykey <- list(space="top", text=list(lab, cex=0.8), title=title, cex.title=1.2)
-    mytheme <- list(strip.background=list(col="lightgrey"))
     mystrip <- strip.custom(par.strip.text=list(cex=0.7))
     f <- as.formula(paste(paste(names(eta.df), collapse="+"), "~ x"))
     if (!is.null(args$groups)) {
@@ -184,23 +190,33 @@ eta_boxplot <- function(x, eta.df, title="", rot=0, right.padding=6, coding=NULL
             pch    = 16,
             cex    = 0.5)
         mytheme$strip.background <- list(col="lightgrey")
+        mypoints=lapply(mytheme$superpose.symbol, rep, length.out=nlevels(args$groups))
+        mykey <- list(space="top", text=list(lab, cex=0.8), title=title, cex.title=1.2)
         argsnew <- c(list(f, eta.df,
                 outer=TRUE, between=list(x=1),
                 scales=myscales, key=mykey, ylab="ETA", layout=c(NA, 1), 
-                prepanel=myprepanel, panel=mysuperpose, panel.groups=mypanel, subscripts=TRUE,
+                prepanel=myprepanel, panel=mysuperpose, panel.groups=myjitter, subscripts=TRUE,
                 strip=mystrip, par.settings=mytheme))
-        argsnew <- c(argsnew, args)
     } else {
         mytheme <- latticeExtra::custom.theme(
             symbol = adjustcolor("black", 0.4),
             pch    = 16)
         mytheme$strip.background <- list(col="lightgrey")
+        mykey <- list(space="top", text=list(lab, cex=0.8), title=title, cex.title=1.2)
         argsnew <- c(list(f, eta.df,
                 outer=TRUE, between=list(x=1),
                 scales=myscales, key=mykey, ylab="ETA", layout=c(NA, 1), 
-                prepanel=myprepanel, panel=mypanel, subscripts=TRUE,
+                prepanel=myprepanel, panel=mypanel,
                 strip=mystrip, par.settings=mytheme))
-        argsnew <- c(argsnew, args)
+    }
+
+    argsnew[names(args)] <- args
+
+    if (!is.null(args$groups)) {
+        mytheme <- argsnew$par.settings
+        mypoints <- lapply(mytheme$superpose.symbol, rep, length.out=nlevels(obs$studyid))
+        mykey <- list(space="top", points=mypoints, text=list(lab, cex=0.8), title=title, cex.title=1.2, between=1)
+        argsnew$key <- mykey
     }
 
     do.call(bwplot, argsnew)
