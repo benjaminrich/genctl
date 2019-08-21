@@ -99,7 +99,7 @@ partab <- function(nm_output) {
             rse <- NA
             ci <- c(NA, NA)
         } else {
-            rse <- 100*se/est
+            rse <- 100*se/abs(est)
             ci <- est + c(-1,1)*1.96*se
         }
 
@@ -147,7 +147,7 @@ partab <- function(nm_output) {
             est <- g(x)
             if (!fixed) {
                 se  <- se*dg(x)
-                rse <- 100*se/est
+                rse <- 100*se/abs(est)
                 ci  <- g(ci)
             }
             if (have.bootstrap) {
@@ -264,13 +264,11 @@ parameter.estimate.table.row <- function(
 #' @export
 generate.parameter.table.HTML <- function(
     nm_output,
+    ptab=subset(partab(nm_output), !(fixed & est==0)),
     na="n/a",
     digits=3) {
 
-    partab <- partab(nm_output)
-    partab <- subset(partab, !(fixed & est==0))
-
-    have.bootstrap = !is.null(partab$boot.median)
+    have.bootstrap = !is.null(ptab$boot.median)
 
     if (have.bootstrap) {
         ncolumns <- 6
@@ -303,8 +301,8 @@ generate.parameter.table.HTML <- function(
 <tbody>')
     }
 
-    for (i in 1:nrow(partab)) {
-        newsection <- (!is.null(partab$type) & !is.na(partab$type[i]) && (i == 1 || partab$type[i] != partab$type[i-1]))
+    for (i in 1:nrow(ptab)) {
+        newsection <- (!is.null(ptab$type) && !is.na(ptab$type[i]) && (i == 1 || ptab$type[i] != ptab$type[i-1]))
         if (newsection) {
             default.labels <- list(
                 Structural      = "Typical Values",
@@ -313,7 +311,7 @@ generate.parameter.table.HTML <- function(
                 IIV             = "Between Subject Variability",
                 IOV             = "Inter-Occasion Variability")
 
-            type <- partab$type[i]
+            type <- ptab$type[i]
             if (type %in% names(nm_output$meta$labels)) {
                 label <- nm_output$meta$labels[[type]]
             } else if (type %in% names(default.labels)) {
@@ -324,7 +322,7 @@ generate.parameter.table.HTML <- function(
 
             cat(parameter.estimate.table.section(label, ncolumns=ncolumns), '\n')
         }
-        args <- c(partab[i,], list(na=na, digits=digits))
+        args <- c(ptab[i,], list(na=na, digits=digits))
         cat(do.call(parameter.estimate.table.row, args), '\n')
     }
 
