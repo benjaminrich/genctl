@@ -180,7 +180,7 @@ eta_boxplot <- function(x, eta.df, title="", rot=0, coding=NULL, ...) {
         myscales <- list(x=list(rot=rot), relation="free")
     } else {
         lab <- sprintf("%s: %s (n=%d)", coding[1:nlevels(x)], levels(x), table(x))
-        myscales <- list(labels=coding[1:nlevels(x)], relation="free")
+        myscales <- list(x=list(labels=coding[1:nlevels(x)], rot=rot, relation="free"))
     }
     mystrip <- strip.custom(par.strip.text=list(cex=0.7))
     f <- as.formula(paste(paste(names(eta.df), collapse="+"), "~ x"))
