@@ -214,7 +214,7 @@ eta_boxplot <- function(x, eta.df, title="", rot=0, coding=NULL, ...) {
 
     if (!is.null(args$groups)) {
         mytheme <- argsnew$par.settings
-        mypoints <- lapply(mytheme$superpose.symbol, rep, length.out=nlevels(obs$studyid))
+        mypoints <- lapply(mytheme$superpose.symbol, rep, length.out=nlevels(args$groups))
         mykey <- list(space="top", points=mypoints, text=list(lab, cex=0.8), title=title, cex.title=1.2, between=1)
         argsnew$key <- mykey
     }
