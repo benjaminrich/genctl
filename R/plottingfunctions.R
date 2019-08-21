@@ -108,13 +108,28 @@ eta_splom <- function(x, eta.sd=NULL, loess="black", ...) {
             symbol = adjustcolor(RColorBrewer::brewer.pal(8, "Dark2"), 0.6),
             pch    = 16)
         mytheme$strip.background <- list(col="lightgrey")
+
+        mystrip <- strip.custom(par.strip.text=list(cex=0.7))
+
+        argsnew <- list()
+
+        argsnew$x            <- x
+        argsnew$as.matrix    <- TRUE
+        argsnew$xlab         <- ""
+        argsnew$superpanel   <- mysuperpanel
+        argsnew$strip        <- mystrip
+        argsnew$par.settings <- mytheme
+
+        args <- list(...)
+        argsnew[names(args)] <- args
+
+        mytheme <- argsnew$par.settings
         mytheme$clip             <- list(panel="off", strip="off")
         mytheme$layout.widths    <- list(left.padding=6, right.padding=6)
         mytheme$layout.heights   <- list(bottom.padding=6, top.padding=6)
+        argsnew$par.settings <- mytheme
 
-        mystrip <- strip.custom(par.strip.text=list(cex=0.7))
-        splom(x, as.matrix=TRUE, xlab="", superpanel=mysuperpanel,
-            strip=mystrip, par.settings=mytheme, ...)
+        do.call(splom, argsnew)
     }
 }
 
