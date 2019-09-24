@@ -3,7 +3,7 @@
 #' @import latticeExtra
 #' @import RColorBrewer
 #' @export
-eta_splom <- function(x, eta.sd=NULL, loess="black", ...) {
+eta_splom <- function(x, eta.sd=NULL, loess=T, ...) {
     mysuperpanel <- function(z, ...) {
         nvar <- length(z)
         mydiagpanel <- function(x, i, j, ...) {
@@ -47,8 +47,11 @@ eta_splom <- function(x, eta.sd=NULL, loess="black", ...) {
             #panel.splom(x, y, pch=16, col=adjustcolor(1, 0.2))
             #panel.loess(x, y, lwd=2, col=2)
             panel.splom(x, y, ...)
-            if (!is.null(loess)) {
-                panel.loess(x, y, lwd=2, col=loess)
+            if (isTRUE(loess)) {
+                panel.loess(x, y,
+                    lty=trellis.par.get()$plot.line$lty,
+                    lwd=trellis.par.get()$plot.line$lwd,
+                    col=trellis.par.get()$plot.line$col)
             }
             otp <- tp <- trellis.par.get()
             tp$superpose.line$col <- 2
@@ -104,9 +107,19 @@ eta_splom <- function(x, eta.sd=NULL, loess="black", ...) {
         }
         histogram(y[,1], xlab="", panel=mydiagpanel1, ...)
     } else {
-        mytheme <- latticeExtra::custom.theme(
-            symbol = adjustcolor(RColorBrewer::brewer.pal(8, "Dark2"), 0.6),
-            pch    = 16)
+        args <- list(...)
+
+        if (!is.null(args$groups)) {
+            mytheme <- latticeExtra::custom.theme(
+                col.points=adjustcolor(RColorBrewer::brewer.pal(8, "Set1"), 0.7),
+                col.line="black",
+                pch=16, cex=1, lwd=3)
+        } else {
+            mytheme <- lattice::simpleTheme(
+                col.points=adjustcolor("black", 0.4),
+                col.line="red",
+                pch=16, cex=1, lwd=3)
+        }
         mytheme$strip.background <- list(col="lightgrey")
 
         mystrip <- strip.custom(par.strip.text=list(cex=0.7))
@@ -120,7 +133,6 @@ eta_splom <- function(x, eta.sd=NULL, loess="black", ...) {
         argsnew$strip        <- mystrip
         argsnew$par.settings <- mytheme
 
-        args <- list(...)
         argsnew[names(args)] <- args
 
         mytheme <- argsnew$par.settings
@@ -128,6 +140,16 @@ eta_splom <- function(x, eta.sd=NULL, loess="black", ...) {
         mytheme$layout.widths    <- list(left.padding=6, right.padding=6)
         mytheme$layout.heights   <- list(bottom.padding=6, top.padding=6)
         argsnew$par.settings <- mytheme
+
+        if (!is.null(args$groups)) {
+            mytheme <- argsnew$par.settings
+            mypoints <- lapply(mytheme$superpose.symbol, rep, length.out=nlevels(args$groups))
+            #if (legend) {
+            #    ngroups <- nlevels(as.factor(groups))
+            #    mykey <- list(space="bottom", lines.title=3, title=" ", columns=min(ngroups, 5))
+            #    argsnew$auto.key <- mykey
+            #}
+        }
 
         do.call(splom, argsnew)
     }
@@ -186,11 +208,11 @@ eta_boxplot <- function(x, eta.df, title="", rot=0, coding=NULL, ...) {
     f <- as.formula(paste(paste(names(eta.df), collapse="+"), "~ x"))
     if (!is.null(args$groups)) {
         mytheme <- latticeExtra::custom.theme(
-            symbol = adjustcolor(RColorBrewer::brewer.pal(8, "Dark2"), 0.7),
-            pch    = 16,
-            cex    = 0.5)
+            col.points=adjustcolor(RColorBrewer::brewer.pal(8, "Set1"), 0.7),
+            col.line="black",
+            pch=16, cex=0.5, lwd=3)
         mytheme$strip.background <- list(col="lightgrey")
-        mypoints=lapply(mytheme$superpose.symbol, rep, length.out=nlevels(args$groups))
+        mypoints <- lapply(mytheme$superpose.symbol, rep, length.out=nlevels(args$groups))
         mykey <- list(space="top", text=list(lab, cex=0.8), title=title, cex.title=1.2)
         argsnew <- c(list(f, eta.df,
                 outer=TRUE, between=list(x=1),
@@ -198,9 +220,10 @@ eta_boxplot <- function(x, eta.df, title="", rot=0, coding=NULL, ...) {
                 prepanel=myprepanel, panel=mysuperpose, panel.groups=myjitter, subscripts=TRUE,
                 strip=mystrip, par.settings=mytheme))
     } else {
-        mytheme <- latticeExtra::custom.theme(
-            symbol = adjustcolor("black", 0.4),
-            pch    = 16)
+        mytheme <- lattice::simpleTheme(
+            col.points=adjustcolor("black", 0.4),
+            col.line="red",
+            pch=16, cex=1, lwd=3)
         mytheme$strip.background <- list(col="lightgrey")
         mykey <- list(space="top", text=list(lab, cex=0.8), title=title, cex.title=1.2)
         argsnew <- c(list(f, eta.df,
@@ -227,19 +250,25 @@ eta_boxplot <- function(x, eta.df, title="", rot=0, coding=NULL, ...) {
 #' @import latticeExtra
 #' @import RColorBrewer
 #' @export
-gof_ident <- function(formula, data, groups=NULL, xylim=NULL, logxy=F, limxf=0.05, legend=!is.null(groups), loess="black", ...) {
+gof_ident <- function(formula, data, groups=NULL, xylim=NULL, logxy=F, limxf=0.05, legend=!is.null(groups), loess=T, ...) {
     mysuperpose <- function(x, y, ...) {
         panel.superpose(x, y, ...)
         panel.abline(0, 1, lty=1, lwd=1, col="gray30")
-        if (!is.null(loess)) {
-            panel.loess(x, y, lwd=3, col=loess)
+        if (isTRUE(loess)) {
+            panel.loess(x, y,
+                lty=trellis.par.get()$plot.line$lty,
+                lwd=trellis.par.get()$plot.line$lwd,
+                col=trellis.par.get()$plot.line$col)
         }
     }
     mypanel <- function(x, y, subscripts, ...) {
         panel.points(x, y, ...)
         panel.abline(0, 1, lty=1, lwd=1, col="gray30")
-        if (!is.null(loess)) {
-            panel.loess(x, y, lwd=3, col=loess)
+        if (isTRUE(loess)) {
+            panel.loess(x, y,
+                lty=trellis.par.get()$plot.line$lty,
+                lwd=trellis.par.get()$plot.line$lwd,
+                col=trellis.par.get()$plot.line$col)
         }
     }
     mystrip <- strip.custom(par.strip.text=list(cex=0.7))
@@ -274,8 +303,9 @@ gof_ident <- function(formula, data, groups=NULL, xylim=NULL, logxy=F, limxf=0.0
 
     if (!is.null(groups)) {
         mytheme <- latticeExtra::custom.theme(
-            symbol = adjustcolor(RColorBrewer::brewer.pal(8, "Dark2"), 0.7),
-            pch    = 16, cex=1)
+            col.points=adjustcolor(RColorBrewer::brewer.pal(8, "Set1"), 0.7),
+            col.line="black",
+            pch=16, cex=1, lwd=3)
 
         argsnew$groups       <- groups
         argsnew$panel        <- mysuperpose
@@ -286,12 +316,13 @@ gof_ident <- function(formula, data, groups=NULL, xylim=NULL, logxy=F, limxf=0.0
             argsnew$auto.key <- mykey
         }
     } else {
-        mytheme <- latticeExtra::custom.theme(
-            symbol = adjustcolor("black", 0.4),
-            pch    = 16)
+        mytheme <- lattice::simpleTheme(
+            col.points=adjustcolor("black", 0.4),
+            col.line="red",
+            pch=16, cex=1, lwd=3)
     }
     mytheme$strip.background <- list(col="lightgrey")
-    #argsnew$par.settings <- mytheme
+    argsnew$par.settings <- mytheme
 
     limxf <- rep(limxf, length.out=2)
     if (logxy) {
@@ -316,21 +347,27 @@ gof_ident <- function(formula, data, groups=NULL, xylim=NULL, logxy=F, limxf=0.0
 #' @import latticeExtra
 #' @import RColorBrewer
 #' @export
-gof_resid <- function(formula, data, groups=NULL, xlim=NULL, ylim=NULL, logx=F, limxf=0.05, legend=!is.null(groups), loess="black", ...) {
+gof_resid <- function(formula, data, groups=NULL, xlim=NULL, ylim=NULL, logx=F, limxf=0.05, legend=!is.null(groups), loess=T, ...) {
     mysuperpose <- function(x, y, ...) {
         panel.superpose(x, y, ...)
         panel.abline(h=0, lty=1, lwd=2, col="gray30")
         panel.abline(h=c(-4, -2, 2, 4), lty=4, lwd=2, col="gray30")
-        if (!is.null(loess)) {
-            panel.loess(x, y, lwd=3, col=loess)
+        if (isTRUE(loess)) {
+            panel.loess(x, y,
+                lty=trellis.par.get()$plot.line$lty,
+                lwd=trellis.par.get()$plot.line$lwd,
+                col=trellis.par.get()$plot.line$col)
         }
     }
     mypanel <- function(x, y, subscripts, ...) {
         panel.points(x, y, ...)
         panel.abline(h=0, lty=1, lwd=2, col="gray30")
         panel.abline(h=c(-4, -2, 2, 4), lty=4, lwd=2, col="gray30")
-        if (!is.null(loess)) {
-            panel.loess(x, y, lwd=3, col=loess)
+        if (isTRUE(loess)) {
+            panel.loess(x, y,
+                lty=trellis.par.get()$plot.line$lty,
+                lwd=trellis.par.get()$plot.line$lwd,
+                col=trellis.par.get()$plot.line$col)
         }
     }
     mystrip <- strip.custom(par.strip.text=list(cex=0.7))
@@ -374,8 +411,9 @@ gof_resid <- function(formula, data, groups=NULL, xlim=NULL, ylim=NULL, logx=F, 
 
     if (!is.null(groups)) {
         mytheme <- latticeExtra::custom.theme(
-            symbol = adjustcolor(RColorBrewer::brewer.pal(8, "Dark2"), 0.7),
-            pch    = 16, cex=1)
+            col.points=adjustcolor(RColorBrewer::brewer.pal(8, "Set1"), 0.7),
+            col.line="black",
+            pch=16, cex=1, lwd=3)
 
         argsnew$groups       <- groups
         argsnew$panel        <- mysuperpose
@@ -386,12 +424,13 @@ gof_resid <- function(formula, data, groups=NULL, xlim=NULL, ylim=NULL, logx=F, 
             argsnew$auto.key <- mykey
         }
     } else {
-        mytheme <- latticeExtra::custom.theme(
-            symbol = adjustcolor("black", 0.4),
-            pch    = 16)
+        mytheme <- lattice::simpleTheme(
+            col.points=adjustcolor("black", 0.4),
+            col.line="red",
+            pch=16, cex=1, lwd=3)
     }
     mytheme$strip.background <- list(col="lightgrey")
-    #argsnew$par.settings <- mytheme
+    argsnew$par.settings <- mytheme
 
     limxf <- rep(limxf, length.out=3)
     if (logx) {
