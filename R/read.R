@@ -308,44 +308,78 @@ read_nm_output <- function(
     if (is.character(bootstrap.file) && file.exists(bootstrap.file)) {
         bootstrap.data <- read.csv(bootstrap.file, header=T, check.names=F)
 
-        keep <- names(bootstrap.data) %in% c(th_names, om_names, sg_names) |
-            grepl("^THETA", names(bootstrap.data)) |
-            grepl("^SIGMA", names(bootstrap.data)) |
-            grepl("^OMEGA", names(bootstrap.data)) |
-            toupper(names(bootstrap.data)) == "OFV"
-
-        bootstrap.keep <- bootstrap.data[, keep]
-
-        type <- rep(c("ofv", "th", "om", "sg"), times=c(1, length(th_names),
-                ((2*length(om_names) + 1)^2 - 1)/8,
-                ((2*length(sg_names) + 1)^2 - 1)/8))
-
-        boot.fixed <- sapply(bootstrap.keep, function(x) length(unique(x))) == 1
-        bootstrap.keep <- bootstrap.keep[, !boot.fixed, drop=F]
-        type <- type[!boot.fixed, drop=F]
-
-        if (!use.vcov) {
-            # variance-covariance to sd/cor
-            bootstrap.keep[, type=="om"] <- t(apply(bootstrap.keep[, type=="om", drop=F], 1, function(x) {
-                v <- LTmat(x)
-                s <- diag(1/sqrt(diag(v)))
-                r <- s %*% v %*% s
-                diag(r) <- sqrt(diag(v))
-                t(r)[upper.tri(r, diag=T)]
-            }))
-
-            # variance-covariance to sd/cor
-            bootstrap.keep[, type=="sg"] <- t(apply(bootstrap.keep[, type=="sg", drop=F], 1, function(x) {
-                v <- LTmat(x)
-                s <- diag(1/sqrt(diag(v)))
-                r <- s %*% v %*% s
-                diag(r) <- sqrt(diag(v))
-                t(r)[upper.tri(r, diag=T)]
-            }))
+        bs.ofv <- function(x) {
+            is.ofv <- toupper(names(x)) == "OFV"
+            x[, is.ofv, drop=F]
         }
 
-        bootstrap.orig <- bootstrap.data[1, names(bootstrap.keep)]
-        bootstrap.data <- bootstrap.data[-1,]
+        bs.th <- function(x) {
+            is.th <- names(x) %in% th_names | grepl("^THETA", names(x))
+            x[, is.th, drop=F]
+        }
+
+        bs.matrix <- function(x, matrx=c("OMEGA", "SIGMA")) {
+
+            nx <- names(x)
+            names(nx) <- nx
+
+            if (matrx == "OMEGA") {
+                d <- length(res$om)
+                q <- om_names
+            } else {
+                d <- length(res$sg)
+                q <- sg_names
+            }
+            nm <- outer(1:d, 1:d, function(x, y) paste0(matrx, "(", y, ",", x, ")"))
+            dnm <- diag(nm)
+            nx[q] <- dnm
+            nm <- nm[upper.tri(nm, diag=T)]
+            names(x) <- nx
+            m <- matrix(0, nrow=nrow(x), ncol=length(nm))
+            m <- as.data.frame(m)
+            names(m) <- nm
+
+            i <- intersect(nm, nx)
+            m[,i] <- x[,i]
+
+            if (!use.vcov) {
+                # variance-covariance to sd/cor
+                if (ncol(m) == 1) {
+                    m <- sqrt(m)
+                } else {
+                    m <- t(apply(m, 1, function(x) {
+                        #if (length(x) == 1) return(sqrt(x))
+                        v <- LTmat(x)
+                        s <- diag(1/sqrt(diag(v)))
+                        r <- s %*% v %*% s
+                        diag(r) <- sqrt(diag(v))
+                        r[is.nan(r)] <- 0
+                        t(r)[upper.tri(r, diag=T)]
+                    }))
+                    m <- as.data.frame(m)
+                }
+            }
+            names(nm) <- nm
+            nm[dnm] <- q
+            names(m) <- nm
+            m
+        }
+
+        bs.om <- function(x) { bs.matrix(x, "OMEGA") }
+        bs.sg <- function(x) { bs.matrix(x, "SIGMA") }
+
+        bootstrap.keep <- cbind(
+            bs.ofv(bootstrap.data),
+            bs.th(bootstrap.data),
+            bs.om(bootstrap.data),
+            bs.sg(bootstrap.data))
+
+        boot.fixed <- sapply(bootstrap.keep, function(x) length(unique(x[!is.na(x)]))) == 1
+        bootstrap.keep <- bootstrap.keep[, !boot.fixed, drop=F]
+
+        bootstrap.orig <- bootstrap.data[1, names(bootstrap.keep), drop=F]
+        bootstrap.data <- bootstrap.data[-1,, drop=F]
+        bootstrap.keep <- bootstrap.keep[-1,, drop=F]
 
         success <- bootstrap.data$minimization_successful == 1
 
@@ -361,7 +395,7 @@ read_nm_output <- function(
         res$bootstrap$data        <- bootstrap.keep
         res$bootstrap$orig        <- bootstrap.orig
         res$bootstrap$median      <- sapply(res$bootstrap$data[success,], median, na.rm=T)
-        res$bootstrap$ci          <- lapply(res$bootstrap$data[success,], quantile, probs=c(0.025, 0.975))
+        res$bootstrap$ci          <- lapply(res$bootstrap$data[success,], quantile, probs=c(0.025, 0.975), na.rm=T)
         res$bootstrap$ci          <- as.data.frame(res$bootstrap$ci, optional=T)
         res$bootstrap$bias        <- 100*(res$bootstrap$median - res$bootstrap$orig)/res$bootstrap$orig
 

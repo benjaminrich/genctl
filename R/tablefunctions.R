@@ -10,6 +10,7 @@ partab <- function(nm_output) {
     partab$rse   <- as.numeric(NA)
     partab$lci   <- as.numeric(NA)
     partab$uci   <- as.numeric(NA)
+    partab$pval   <- as.numeric(NA)
 
     have.bootstrap <- !is.null(nm_output$bootstrap)
     if (have.bootstrap) {
@@ -35,7 +36,7 @@ partab <- function(nm_output) {
             est <- nm_output$all[[name]]
             se <- nm_output$se$all[[name]]
             fixed <- nm_output$fixed$all[[name]]
-            if (have.bootstrap) {
+            if (have.bootstrap && name %in% names(nm_output$bootstrap$median)) {
                 boot.median <- nm_output$bootstrap$median[[name]]
                 boot.lci <- nm_output$bootstrap$ci[[name]][1]
                 boot.uci <- nm_output$bootstrap$ci[[name]][2]
@@ -98,9 +99,11 @@ partab <- function(nm_output) {
             se <- NA
             rse <- NA
             ci <- c(NA, NA)
+            pval <- NA
         } else {
             rse <- 100*se/abs(est)
             ci <- est + c(-1,1)*1.96*se
+            pval <- 2*(1 - pnorm(abs(est/se)))
         }
 
         # Check transformation
@@ -163,6 +166,7 @@ partab <- function(nm_output) {
         partab$rse[i]   <- rse
         partab$lci[i]   <- ci[1]
         partab$uci[i]   <- ci[2]
+        partab$pval[i]  <- pval
         if (have.bootstrap) {
             partab$boot.median[i] <- boot.median
             partab$boot.lci[i] <- boot.lci
