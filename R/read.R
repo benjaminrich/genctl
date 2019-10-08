@@ -377,9 +377,9 @@ read_nm_output <- function(
         boot.fixed <- sapply(bootstrap.keep, function(x) length(unique(x[!is.na(x)]))) == 1
         bootstrap.keep <- bootstrap.keep[, !boot.fixed, drop=F]
 
-        bootstrap.orig <- bootstrap.data[1, names(bootstrap.keep), drop=F]
-        bootstrap.data <- bootstrap.data[-1,, drop=F]
+        bootstrap.orig <- bootstrap.keep[1,, drop=F]
         bootstrap.keep <- bootstrap.keep[-1,, drop=F]
+        bootstrap.data <- bootstrap.data[-1,, drop=F]
 
         success <- bootstrap.data$minimization_successful == 1
 
@@ -387,10 +387,10 @@ read_nm_output <- function(
             c("minimization_successful", "covariance_step_successful",
                 "estimate_near_boundary", "rounding_errors")]
         res$bootstrap$n$total          <- nrow(bootstrap.data)
-        res$bootstrap$n$successful     <- sum(bootstrap.data$minimization_successful)
-        res$bootstrap$n$covstep        <- sum(bootstrap.data$covariance_step_successful)
-        res$bootstrap$n$nearboundary   <- sum(bootstrap.data$estimate_near_boundary)
-        res$bootstrap$n$roundingerrors <- sum(bootstrap.data$rounding_errors)
+        res$bootstrap$n$successful     <- sum(bootstrap.data$minimization_successful, na.rm=T)
+        res$bootstrap$n$covstep        <- sum(bootstrap.data$covariance_step_successful, na.rm=T)
+        res$bootstrap$n$nearboundary   <- sum(bootstrap.data$estimate_near_boundary, na.rm=T)
+        res$bootstrap$n$roundingerrors <- sum(bootstrap.data$rounding_errors, na.rm=T)
 
         res$bootstrap$data        <- bootstrap.keep
         res$bootstrap$orig        <- bootstrap.orig
