@@ -3,7 +3,7 @@
 #' @import latticeExtra
 #' @import RColorBrewer
 #' @export
-eta_splom <- function(x, eta.sd=NULL, loess=T, ...) {
+eta_splom <- function(x, eta.sd=NULL, shrinkage=NULL, loess=T, ...) {
     mysuperpanel <- function(z, ...) {
         nvar <- length(z)
         mydiagpanel <- function(x, i, j, ...) {
@@ -32,7 +32,11 @@ eta_splom <- function(x, eta.sd=NULL, loess=T, ...) {
                 dy2 <- ylim[1] + 0.95*diff(ylim)*(dnorm(dx, 0, om)/max(d$y))
                 #panel.lines(dx, dy2, col=adjustcolor("black", 0.6))
                 panel.lines(dx, dy2, col="black")
-                shrinkage <- 1 - sd(x)/om
+                if (is.null(shrinkage)) {
+                    shrinkage <- 1 - sd(x)/om
+                } else {
+                    shrinkage <- shrinkage[args$varname]
+                }
                 panel.text(mean(xlim), ylim[1],
                     sprintf("Shrinkage: %.01f%%", 100*shrinkage), pos=3, cex=0.8)
             }
