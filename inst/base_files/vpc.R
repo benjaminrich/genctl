@@ -21,6 +21,9 @@ suppressPackageStartupMessages({
 
 meta <- read_meta()
 
+# Run this system command once to remove extra header lines from the simulation table
+#system(paste0("perl -i -ne 'print if $. == 1 or /^[:space:]*[0-9]/' ", meta$data$vpctable)
+
 nmtab <- read.nonmem.csv(meta$data$nmtable)
 vpctab <- read.nonmem.csv(meta$data$vpctable)
 

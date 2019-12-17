@@ -31,6 +31,7 @@ call %nmfe% %ctl_file% %lst_file%
 
 rem Remove temporary files
 if exist  temp_dir rmdir /q /s temp_dir
+for /d /r %%i in (worker*) do @rmdir /q /s "%%i"
 if exist  background.set          del background.set          2>trash.out
 if exist  compile.lnk             del compile.lnk             2>trash.out
 if exist  FCON                    del FCON                    2>trash.out
@@ -79,6 +80,11 @@ if exist  flushtime.set           del flushtime.set           2>trash.out
 if exist  nobuild.set             del nobuild.set             2>trash.out
 if exist  parafprint.set          del parafprint.set          2>trash.out
 if exist  simparon.set            del simparon.set            2>trash.out
+if exist  trashfile.xxx           del trashfile.xxx           2>trash.out
+if exist  temp.out                del temp.out                2>trash.out
+if exist  mpiloc.bat              del mpiloc.bat              2>trash.out
+if exist  nmmpi.bat               del nmmpi.bat               2>trash.out
+if exist  fort.4                  del fort.4                  2>trash.out
 
 rem goto render
 goto exit
