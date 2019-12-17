@@ -4,8 +4,7 @@
 \alias{eta_boxplot}
 \title{ETA boxplots}
 \usage{
-eta_boxplot(x, eta.df, title = "", rot = 0, right.padding = 6,
-  coding = NULL, ...)
+eta_boxplot(x, eta.df, title = "", rot = 0, coding = NULL, ...)
 }
 \description{
 ETA boxplots

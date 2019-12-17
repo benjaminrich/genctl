@@ -5,8 +5,8 @@
 \title{Residual GOF plot}
 \usage{
 gof_resid(formula, data, groups = NULL, xlim = NULL, ylim = NULL,
-  logx = F, limxf = 0.05, legend = !is.null(groups),
-  loess = "black", ...)
+  logx = F, limxf = 0.05, legend = !is.null(groups), loess = T,
+  ...)
 }
 \description{
 Residual GOF plot
