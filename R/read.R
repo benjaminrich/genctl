@@ -213,6 +213,12 @@ read_nm_output <- function(
     # Read .lst file
     if (is.character(lst.file) && file.exists(lst.file)) {
         l <- readLines(lst.file)
+
+        runstarted <- strptime(paste(l[1], l[2]), "%A %m/%d/%Y %I:%M %p")
+
+        i <- which(grepl("^NM-TRAN MESSAGES", l))
+        l <- l[(1:length(l))>i]
+
         convergence <- "FAILED"
         if (any(grepl("MINIMIZATION SUCCESSFUL", l))) {
             convergence <- "SUCCESSFUL"
@@ -225,8 +231,53 @@ read_nm_output <- function(
         }
         covstep <- convergence > 0 && !is.null(res$se)
 
-        res$minimization <- convergence
-        res$covstep      <- covstep
+        nmversion <- NULL
+        i <- grepl("1NONLINEAR MIXED EFFECTS MODEL PROGRAM \\(NONMEM\\) VERSION", l)
+        if (any(i)) {
+            nmversion <- gsub("1NONLINEAR MIXED EFFECTS MODEL PROGRAM \\(NONMEM\\) VERSION", "", l[i])
+            nmversion <- gsub("^\\s+", "", nmversion)
+            nmversion <- gsub("\\s+$", "", nmversion)
+        }
+
+        n.obs <- NULL
+        i <- grepl("TOT. NO. OF OBS RECS:", l)
+        if (any(i)) {
+            n.obs <- scan(quiet=T, text=gsub(".*:", "", l[i]))
+        }
+
+        n.indiv <- NULL
+        i <- grepl("TOT. NO. OF INDIVIDUALS:", l)
+        if (any(i)) {
+            n.indiv <- scan(quiet=T, text=gsub(".*:", "", l[i]))
+        }
+
+        runtime.estim <- NULL
+        i <- grepl("Elapsed estimation  time in seconds:", l)
+        if (any(i)) {
+            runtime.estim <- scan(quiet=T, text=gsub(".*:", "", l[i]))
+        }
+
+        runtime.covstep <- NULL
+        i <- grepl("Elapsed covariance  time in seconds:", l)
+        if (any(i)) {
+            runtime.covstep <- scan(quiet=T, text=gsub(".*:", "", l[i]))
+        }
+
+        runtime.postproc <- NULL
+        i <- grepl("Elapsed postprocess time in seconds:", l)
+        if (any(i)) {
+            runtime.postproc <- scan(quiet=T, text=gsub(".*:", "", l[i]))
+        }
+
+        res$nmversion        <- nmversion
+        res$runstarted       <- runstarted
+        res$runtime$estim    <- runtime.estim
+        res$runtime$covstep  <- runtime.covstep
+        res$runtime$postproc <- runtime.postproc
+        res$num$indiv        <- n.indiv
+        res$num$obs          <- n.obs
+        res$minimization     <- convergence
+        res$covstep          <- covstep
     }
 
     # Read .cov file
