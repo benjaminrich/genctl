@@ -52,32 +52,56 @@ read_nm_output <- function(
         }
 
         if (names(ext)[ncol(ext)] != "obj") {
-            stop("This form of estimation is not supported at the moment.")
+            warning("This form of estimation is not supported at the moment.")
         }
 
+        ifinal <- NULL
+        ise <- NULL
+        icor <- NULL
+        isecor <- NULL
+        ifixed <- NULL
         if (any(ext$iteration==-1000000000)) {
-            ofv <- ext[ext$iteration==-1000000000, grepl("obj", names(ext))]
+            ifinal <- tail(which(ext$iteration==-1000000000), 1)
+        }
+        if (any(ext$iteration==-1000000001)) {
+            ise <- tail(which(ext$iteration==-1000000001), 1)
+        }
+        if (any(ext$iteration==-1000000004)) {
+            icor <- tail(which(ext$iteration==-1000000004), 1)
+        }
+        if (any(ext$iteration==-1000000005)) {
+            isecor <- tail(which(ext$iteration==-1000000005), 1)
+        }
+        if (any(ext$iteration==-1000000006)) {
+            ifixed <- tail(which(ext$iteration==-1000000006), 1)
+        }
+        if (!is.null(ifinal)) {
+
+            ofv <- ext[ifinal, grepl("obj", names(ext))]
             ofv <- as.numeric(ofv)
 
-            th <- ext[ext$iteration==-1000000000, grepl("^theta", names(ext))]
+            th <- ext[ifinal, grepl("^theta", names(ext))]
             th <- as.numeric(th)
             names(th) <- th_names
 
-            om_cov <- ext[ext$iteration==-1000000000, grepl("^omega", names(ext))]
+            om_cov <- ext[ifinal, grepl("^omega", names(ext))]
             om_cov <- LTmat(as.numeric(om_cov))
             dimnames(om_cov) <- list(om_names, om_names)
 
-            sg_cov <- ext[ext$iteration==-1000000000, grepl("^sigma", names(ext))]
+            sg_cov <- ext[ifinal, grepl("^sigma", names(ext))]
             sg_cov <- LTmat(as.numeric(sg_cov))
             dimnames(sg_cov) <- list(sg_names, sg_names)
 
-            om_cor <- ext[ext$iteration==-1000000004, grepl("^omega", names(ext))]
-            om_cor <- LTmat(as.numeric(om_cor))
-            dimnames(om_cor) <- list(om_names, om_names)
+            if (!is.null(icor)) {
 
-            sg_cor <- ext[ext$iteration==-1000000004, grepl("^sigma", names(ext))]
-            sg_cor <- LTmat(as.numeric(sg_cor))
-            dimnames(sg_cor) <- list(sg_names, sg_names)
+                om_cor <- ext[icor, grepl("^omega", names(ext))]
+                om_cor <- LTmat(as.numeric(om_cor))
+                dimnames(om_cor) <- list(om_names, om_names)
+
+                sg_cor <- ext[icor, grepl("^sigma", names(ext))]
+                sg_cor <- LTmat(as.numeric(sg_cor))
+                dimnames(sg_cor) <- list(sg_names, sg_names)
+            }
 
             if (use.vcov) {
                 om <- diag(om_cov)
@@ -100,24 +124,24 @@ read_nm_output <- function(
             res$sg_cor <- sg_cor
         }
 
-        if (any(ext$iteration==-1000000006)) {
-            th_fix  <- ext[ext$iteration==-1000000006, grepl("^theta", names(ext))]
+        if (!is.null(ifixed)) {
+            th_fix  <- ext[ifixed, grepl("^theta", names(ext))]
             th_fix <- as.numeric(th_fix) == 1
             names(th_fix) <- th_names
 
-            om_cov_fix <- ext[ext$iteration==-1000000006, grepl("^omega", names(ext))]
+            om_cov_fix <- ext[ifixed, grepl("^omega", names(ext))]
             om_cov_fix <- LTmat(as.numeric(om_cov_fix)) == 1
             dimnames(om_cov_fix) <- list(om_names, om_names)
 
-            sg_cov_fix <- ext[ext$iteration==-1000000006, grepl("^sigma", names(ext))]
+            sg_cov_fix <- ext[ifixed, grepl("^sigma", names(ext))]
             sg_cov_fix <- LTmat(as.numeric(sg_cov_fix)) ==1
             dimnames(sg_cov_fix) <- list(sg_names, sg_names)
 
-            om_cor_fix <- ext[ext$iteration==-1000000006, grepl("^omega", names(ext))]
+            om_cor_fix <- ext[ifixed, grepl("^omega", names(ext))]
             om_cor_fix <- LTmat(as.numeric(om_cor_fix)) == 1
             dimnames(om_cor_fix) <- list(om_names, om_names)
 
-            sg_cor_fix <- ext[ext$iteration==-1000000006, grepl("^sigma", names(ext))]
+            sg_cor_fix <- ext[ifixed, grepl("^sigma", names(ext))]
             sg_cor_fix <- LTmat(as.numeric(sg_cor_fix)) ==1
             dimnames(sg_cor_fix) <- list(sg_names, sg_names)
 
@@ -141,31 +165,33 @@ read_nm_output <- function(
             res$fixed$sg_cor <- sg_cor_fix
         }
 
-        if (any(ext$iteration==-1000000001)) {
-            th_se  <- ext[ext$iteration==-1000000001, grepl("^theta", names(ext))]
+        if (!is.null(ise)) {
+            th_se  <- ext[ise, grepl("^theta", names(ext))]
             th_se <- as.numeric(th_se)
             th_se[th_fix] <- NA
             names(th_se) <- th_names
 
-            om_cov_se <- ext[ext$iteration==-1000000001, grepl("^omega", names(ext))]
+            om_cov_se <- ext[ise, grepl("^omega", names(ext))]
             om_cov_se <- LTmat(as.numeric(om_cov_se))
             om_cov_se[om_cov_fix] <- NA
             dimnames(om_cov_se) <- list(om_names, om_names)
 
-            sg_cov_se <- ext[ext$iteration==-1000000001, grepl("^sigma", names(ext))]
+            sg_cov_se <- ext[ise, grepl("^sigma", names(ext))]
             sg_cov_se <- LTmat(as.numeric(sg_cov_se))
             sg_cov_se[sg_cov_fix] <- NA
             dimnames(sg_cov_se) <- list(sg_names, sg_names)
 
-            om_cor_se <- ext[ext$iteration==-1000000005, grepl("^omega", names(ext))]
-            om_cor_se <- LTmat(as.numeric(om_cor_se))
-            om_cor_se[om_fix] <- NA
-            dimnames(om_cor_se) <- list(om_names, om_names)
+            if (!is.null(isecor)) {
+                om_cor_se <- ext[isecor, grepl("^omega", names(ext))]
+                om_cor_se <- LTmat(as.numeric(om_cor_se))
+                om_cor_se[om_fix] <- NA
+                dimnames(om_cor_se) <- list(om_names, om_names)
 
-            sg_cor_se <- ext[ext$iteration==-1000000005, grepl("^sigma", names(ext))]
-            sg_cor_se <- LTmat(as.numeric(sg_cor_se))
-            sg_cor_se[sg_fix] <- NA
-            dimnames(sg_cor_se) <- list(sg_names, sg_names)
+                sg_cor_se <- ext[isecor, grepl("^sigma", names(ext))]
+                sg_cor_se <- LTmat(as.numeric(sg_cor_se))
+                sg_cor_se[sg_fix] <- NA
+                dimnames(sg_cor_se) <- list(sg_names, sg_names)
+            }
 
             if (use.vcov) {
                 om_se <- diag(om_cov_se)
