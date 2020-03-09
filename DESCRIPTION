@@ -1,7 +1,7 @@
 Package: genctl
 Type: Package
-Version: 0.1
-Date: 2018-11-27
+Version: 0.2
+Date: 2019-01-29
 Title: Template-Based Workflow for NONMEM
 Authors@R: person("Benjamin", "Rich", role=c("aut", "cre"), email="mail@benjaminrich.net")
 Description: TBD
@@ -9,4 +9,4 @@ License: GPL-3
 Imports: utils,grid,gridExtra,lattice,latticeExtra,RColorBrewer,table1
 Suggests: knitr,shiny
 VignetteBuilder: knitr
-RoxygenNote: 6.1.1
+RoxygenNote: 7.0.2.9000

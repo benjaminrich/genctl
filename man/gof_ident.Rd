@@ -4,8 +4,17 @@
 \alias{gof_ident}
 \title{Identity GOF plot}
 \usage{
-gof_ident(formula, data, groups = NULL, xylim = NULL, logxy = F,
-  limxf = 0.05, legend = !is.null(groups), loess = T, ...)
+gof_ident(
+  formula,
+  data,
+  groups = NULL,
+  xylim = NULL,
+  logxy = F,
+  limxf = 0.05,
+  legend = !is.null(groups),
+  loess = T,
+  ...
+)
 }
 \description{
 Identity GOF plot

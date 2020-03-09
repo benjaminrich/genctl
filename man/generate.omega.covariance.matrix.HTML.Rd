@@ -4,8 +4,11 @@
 \alias{generate.omega.covariance.matrix.HTML}
 \title{Generate an OMEGA covariance matrix table in HTML}
 \usage{
-generate.omega.covariance.matrix.HTML(nm_results,
-  omega = nm_results$om_cov, digits = 3)
+generate.omega.covariance.matrix.HTML(
+  nm_results,
+  omega = nm_results$om_cov,
+  digits = 3
+)
 }
 \description{
 Generate an OMEGA covariance matrix table in HTML

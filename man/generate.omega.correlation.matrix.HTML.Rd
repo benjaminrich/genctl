@@ -4,8 +4,11 @@
 \alias{generate.omega.correlation.matrix.HTML}
 \title{Generate an OMEGA correlation matrix table in HTML}
 \usage{
-generate.omega.correlation.matrix.HTML(nm_results,
-  omega = nm_results$om_cor, digits = 3)
+generate.omega.correlation.matrix.HTML(
+  nm_results,
+  omega = nm_results$om_cor,
+  digits = 3
+)
 }
 \description{
 Generate an OMEGA correlation matrix table in HTML

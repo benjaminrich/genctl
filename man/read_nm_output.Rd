@@ -4,7 +4,8 @@
 \alias{read_nm_output}
 \title{Read NONMEM output.}
 \usage{
-read_nm_output(rundir = getwd(),
+read_nm_output(
+  rundir = getwd(),
   runname = basename(normalizePath(rundir)),
   lst.file = file.path(rundir, sprintf("\%s.lst", runname)),
   ext.file = file.path(rundir, sprintf("\%s.ext", runname)),
@@ -14,10 +15,14 @@ read_nm_output(rundir = getwd(),
   cov.file = file.path(rundir, sprintf("\%s.cov", runname)),
   cor.file = file.path(rundir, sprintf("\%s.cor", runname)),
   bootstrap.file = file.path(rundir, "Bootstrap", "bootstrap_dir1",
-  sprintf("raw_results_\%s.csv", runname)),
+    sprintf("raw_results_\%s.csv", runname)),
   meta = read_meta(file.path(rundir, "meta.yaml")),
-  th_names = meta$namemap$theta, om_names = meta$namemap$omega,
-  sg_names = meta$namemap$sigma, use.vcov = FALSE, ...)
+  th_names = meta$namemap$theta,
+  om_names = meta$namemap$omega,
+  sg_names = meta$namemap$sigma,
+  use.vcov = FALSE,
+  ...
+)
 }
 \arguments{
 \item{use.vcov}{Should the default OMEGA and SIGMA be on the variance/covariance scale instead of the SD/correlation scale?}
