@@ -350,6 +350,15 @@ read_nm_output <- function(
         cor <- as.matrix(cor)
         rownames(cor) <- colnames(cor)
         res$se_cor <- cor
+
+        # Eigenvalues and condition number
+        temp <- cor
+        i <- apply(temp, 1, sd) > 0
+        temp <- temp[i, i]
+        diag(temp) <- 1
+        eigv <- rev(eigen(temp)$values)  # From smallest to largest, the way NONMEM shows them in .lst
+        res$eigv <- eigv
+        res$condition_number <- max(eigv)/min(eigv)
     }
 
     # Read .phi file
