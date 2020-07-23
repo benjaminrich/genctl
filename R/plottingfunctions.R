@@ -33,7 +33,7 @@ eta_splom <- function(x, eta.sd=NULL, shrinkage=NULL, loess=T, ...) {
                 #panel.lines(dx, dy2, col=adjustcolor("black", 0.6))
                 panel.lines(dx, dy2, col="black")
                 if (is.null(shrinkage)) {
-                    shrinkage <- 1 - sd(x)/om
+                    shrinkage <- 1 - sd(x, na.rm=T)/om
                 } else {
                     shrinkage <- shrinkage[args$varname]
                 }
