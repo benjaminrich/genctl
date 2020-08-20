@@ -14,8 +14,7 @@ goto exit
 :run
 set nmfe=C:\\nm74g64\\run\\nmfe74.bat
 set I_MPI_AUTH_METHOD=delegate
-rem set paraopts="-parafile=C:\nm73g64\run\mpiwini8.pnm" "[nodes]=3"
-rem set paraopts="-parafile=%origwd%\mpiwini8.pnm" "[nodes]=3"
+set paraopts="-parafile=U:\mpiwini8.pnm" "[nodes]=15"
 set run_dir=%~n1
 set ctl_file=%run_dir%.ctl
 set lst_file=%run_dir%.lst
@@ -26,12 +25,11 @@ if exist %ctl_file% perl -pe "$_ =~ s/(\$DATA\s+)(\S+)/$1..\/$2/g;" %ctl_file% >
 
 cd %run_dir%
 
-rem call %nmfe% %ctl_file% %lst_file% %paraopts%
-call %nmfe% %ctl_file% %lst_file%
+call %nmfe% %ctl_file% %lst_file% %paraopts%
+rem call %nmfe% %ctl_file% %lst_file%
 
 rem Remove temporary files
 if exist  temp_dir rmdir /q /s temp_dir
-for /d /r %%i in (worker*) do @rmdir /q /s "%%i"
 if exist  background.set          del background.set          2>trash.out
 if exist  compile.lnk             del compile.lnk             2>trash.out
 if exist  FCON                    del FCON                    2>trash.out
@@ -80,11 +78,11 @@ if exist  flushtime.set           del flushtime.set           2>trash.out
 if exist  nobuild.set             del nobuild.set             2>trash.out
 if exist  parafprint.set          del parafprint.set          2>trash.out
 if exist  simparon.set            del simparon.set            2>trash.out
-if exist  trashfile.xxx           del trashfile.xxx           2>trash.out
-if exist  temp.out                del temp.out                2>trash.out
+if exist  fort.4                  del fort.4                  2>trash.out
 if exist  mpiloc.bat              del mpiloc.bat              2>trash.out
 if exist  nmmpi.bat               del nmmpi.bat               2>trash.out
-if exist  fort.4                  del fort.4                  2>trash.out
+if exist  trashfile.xxx           del trashfile.xxx           2>trash.out
+for /d %%a in (worker*) do @if exist "%%a" rmdir /q /s "%%a"  2>trash.out
 
 rem goto render
 goto exit
