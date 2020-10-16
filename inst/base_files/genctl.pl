@@ -156,6 +156,13 @@ for my $i (0..$#{$mod}) {
         mkdir "$run_dir" or die "Error creating directory $run_dir: $!";
     }
 
+    if (-e "$ctl_file") {
+        if ((exists $mod->[$i]{'overwrite'}) and not $mod->[$i]{'overwrite'}) {
+            print "Not overwriting existing file $ctl_file ...\n";
+            next;
+        }
+    }
+
     print "Generating $ctl_file ...\n";
     $_ = $mod->[$i]{'flags'};
     $_ =~ s/,/ /g;
@@ -306,12 +313,20 @@ END_RENDER_RESULTS_BAT
     print RENDERRESULTSBAT $render_results_bat;
 
     #$nnodes = int(36 / ($#{$mod} + 1));
-    $nnodes = 36;
+    #$nnodes = 36;
+    $nnodes = 12;
     $run_me_sh = <<END_RUN_ME_SH;
 rm -rf modelfit_dir*
+if [ -f "$modname.ctl" ]; then
 execute --run_on_sge --sge_prepend="-pe mpi $nnodes" $modname.ctl --nodes=$nnodes --parafile=/shared/.admin/mpigrid.pnm --nm_version=nm73 --clean=1 --nm_output=ext,shk,phi,phm
 cp modelfit_dir1/NM_run1/*.msf .
 rm -rf modelfit_dir*
+fi
+if [ -f "${modname}_vpc.ctl" ]; then
+execute --run_on_sge --sge_prepend="-pe mpi $nnodes" ${modname}_vpc.ctl --nodes=$nnodes --parafile=/shared/.admin/mpigrid.pnm --nm_version=nm73 --clean=1
+sed -i -e '1p;/^\\s*[a-zA-Z]/d' vpctable1.csv
+rm -rf modelfit_dir*
+fi
 END_RUN_ME_SH
 
     open RUNMEDOTSH, ">", "$run_dir/RUN_ME.sh" || die "Error opening file $run_dir/RUN_ME.sh in write mode: $!";
@@ -333,9 +348,12 @@ $tt->process(\$template_menu_run_all_seq_bat, { models => $mod }, "nmrun_all_seq
 
 $template_menu_run_all_seq_sh = <<'END_TEMPLATE_RUN_ALL_SEQ_SH';
 [% FOREACH m IN models %]
+#if [ ( -d "[% m.name %]" ) -a ( -f "[% m.name %]/RUN_ME.sh" ) ]; then
+if [ -f "[% m.name %]/RUN_ME.sh" ]; then
 cd [% m.name +%]
 nohup bash RUN_ME.sh &
 cd ..
+fi
 [% END %]
 END_TEMPLATE_RUN_ALL_SEQ_SH
 

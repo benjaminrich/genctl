@@ -278,7 +278,8 @@ END_RENDER_VPC_BAT
     open RENDERVPCBAT, ">", "$run_dir/render_vpc.bat" || die "Error opening file $run_dir/render_vpc.bat in write mode: $!";
     print RENDERVPCBAT $render_vpc_bat;
 
-    $nnodes = int(36 / ($#{$mod} + 1));
+    #$nnodes = int(36 / ($#{$mod} + 1));
+    $nnodes = 12;
     $run_me_sh = <<END_RUN_ME_SH;
 rm -rf modelfit_dir*
 execute --run_on_sge --sge_prepend="-pe mpi $nnodes" $modname_vpc.ctl --nodes=$nnodes --parafile=/shared/.admin/mpigrid.pnm --nm_version=nm73 --clean=1 --nm_output=ext,shk
@@ -290,7 +291,6 @@ END_RUN_ME_SH
     print RUNMEDOTSH $run_me_sh;
 
 }
-
 
 
 
