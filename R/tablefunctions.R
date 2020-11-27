@@ -280,7 +280,7 @@ generate.parameter.table.HTML <- function(
 <thead>
 <tr>
 <th style="text-align:left" rowspan="2">Parameter</th>
-<th rowspan="2">Point estimate</th>
+<th rowspan="2">Estimate</th>
 <th rowspan="2">RSE%</th>
 <th rowspan="2">95% CI</th>
 <th colspan="2">Bootstrap</th>
