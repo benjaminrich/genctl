@@ -198,7 +198,7 @@ parameter.estimate.table.row <- function(
     label          = NULL,
     units          = NULL,
     type           = c("Structural", "CovariateEffect", "IIV", "IOV", "RUV", "Unspecified"),
-    trans          = c("identity", "%", "exp", "ilogit", "CV%"),
+    trans          = c("identity", "%", "exp", "ilogit", "CV%", "SD (CV%)"),
     expression     = NULL,
     relatedTo      = NULL,
     superscript    = NULL,
@@ -233,7 +233,13 @@ parameter.estimate.table.row <- function(
         label <- sprintf("%s (%s)", label, units)
     }
 
-    est <- p(est, digits)
+    if (!is.null(trans) && !is.na(trans) && trans == "SD (CV%)") {
+        g <- function(x) { 100*sqrt(exp(x^2) - 1) }
+        x <- est
+        est <- sprintf("%s (%s%%)", p(x, digits), p(g(x), digits))
+    } else {
+        est <- p(est, digits)
+    }
     est <- paste0(est, superscript)
     if (fixed) {
         est <- sprintf('%s Fixed', est)
@@ -297,7 +303,7 @@ generate.parameter.table.HTML <- function(
 <thead>
 <tr>
 <th style="text-align:left">Parameter</th>
-<th>Point estimate</th>
+<th>Estimate</th>
 <th>RSE%</th>
 <th>95% CI</th>
 </tr>
