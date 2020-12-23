@@ -4,13 +4,14 @@ partab <- function(nm_output) {
     param <- nm_output$meta$parameters
     partab <- data.table::rbindlist(param, fill=T)
 
-    partab$fixed <- as.logical(NA)
-    partab$est   <- as.numeric(NA)
-    partab$se    <- as.numeric(NA)
-    partab$rse   <- as.numeric(NA)
-    partab$lci   <- as.numeric(NA)
-    partab$uci   <- as.numeric(NA)
-    partab$pval   <- as.numeric(NA)
+    partab$fixed     <- as.logical(NA)
+    partab$est       <- as.numeric(NA)
+    partab$se        <- as.numeric(NA)
+    partab$rse       <- as.numeric(NA)
+    partab$lci       <- as.numeric(NA)
+    partab$uci       <- as.numeric(NA)
+    partab$pval      <- as.numeric(NA)
+    partab$shrinkage <- as.numeric(NA)
 
     have.bootstrap <- !is.null(nm_output$bootstrap)
     if (have.bootstrap) {
@@ -172,6 +173,10 @@ partab <- function(nm_output) {
             partab$boot.lci[i] <- boot.lci
             partab$boot.uci[i] <- boot.uci
         }
+
+        if (partab$name[i] %in% names(nm_output$shrinkage)) {
+            partab$shrinkage[i] <- nm_output$shrinkage[partab$name[i]]
+        }
     }
     partab <- subset(partab, !is.na(est))
     partab
@@ -211,6 +216,7 @@ parameter.estimate.table.row <- function(
     boot.median    = NULL,
     boot.lci       = NULL,
     boot.uci       = NULL,
+    shrinkage      = NULL,
     na             = "n/a",
     digits         = 3,
     have.bootstrap = !is.null(boot.median),
@@ -240,10 +246,13 @@ parameter.estimate.table.row <- function(
     } else {
         est <- p(est, digits)
     }
+
     est <- paste0(est, superscript)
+
     if (fixed) {
         est <- sprintf('%s Fixed', est)
     }
+
     if (is.na(se)) {
         se <- na
         rse <- na
@@ -252,6 +261,7 @@ parameter.estimate.table.row <- function(
         rse <- p(rse, digits)
         ci <- sprintf('%s &ndash; %s', p(lci, digits), p(uci, digits))
     }
+
     if (have.bootstrap) {
         if (is.na(boot.median)) {
             boot.median <- na
@@ -264,9 +274,17 @@ parameter.estimate.table.row <- function(
         boot.ci <- NULL
     }
 
+    if (!is.null(shrinkage)) {
+        if (is.na(shrinkage)) {
+            shrinkage <- ""
+        } else {
+            shrinkage <- sprintf("%s%%", p(shrinkage, digits))
+        }
+    }
+
     paste0(c('<tr>',
         sprintf('<td class="paramlabel">%s</td>', label),
-        paste0(sprintf('<td>%s</td>', c(est, rse, ci, boot.median, boot.ci)), collapse='\n'),
+        paste0(sprintf('<td>%s</td>', c(est, rse, ci, boot.median, boot.ci, shrinkage)), collapse='\n'),
         '</tr>'), collapse='\n')
 }
 
@@ -275,41 +293,56 @@ parameter.estimate.table.row <- function(
 generate.parameter.table.HTML <- function(
     nm_output,
     ptab=subset(partab(nm_output), !(fixed & est==0)),
+    bootstrap=TRUE,
+    shrinkage=FALSE,
     na="n/a",
     digits=3) {
 
-    have.bootstrap = !is.null(ptab$boot.median)
+    have.bootstrap = isTRUE(bootstrap) && !is.null(ptab$boot.median)
+    have.shrinkage = isTRUE(shrinkage) && !is.null(ptab$shrinkage)
 
+    ncolumns <- 4
     if (have.bootstrap) {
-        ncolumns <- 6
-        cat('<table>
+        ncolumns <- ncolumns + 2
+    }
+    if (have.shrinkage) {
+        ncolumns <- ncolumns + 1
+    }
+
+    cat('<table>
 <thead>
 <tr>
-<th style="text-align:left" rowspan="2">Parameter</th>
+')
+    if (have.bootstrap) {
+        cat('<th style="text-align:left" rowspan="2">Parameter</th>
 <th rowspan="2">Estimate</th>
 <th rowspan="2">RSE%</th>
 <th rowspan="2">95% CI</th>
 <th colspan="2">Bootstrap</th>
-</tr>
+')
+        if (have.shrinkage) {
+            cat('<th rowspan="2">Shrinkage</th>
+')
+        }
+        cat('</tr>
 <th>Median</th>
 <th>95% CI</th>
-<tr>
-</tr>
-</thead>
-<tbody>')
+<tr>')
     } else {
-        ncolumns <- 4
-        cat('<table>
-<thead>
-<tr>
-<th style="text-align:left">Parameter</th>
+        cat('<th style="text-align:left">Parameter</th>
 <th>Estimate</th>
 <th>RSE%</th>
 <th>95% CI</th>
-</tr>
+')
+        if (have.shrinkage) {
+            cat('<th>Shrinkage</th>
+')
+        }
+    }
+
+    cat('</tr>
 </thead>
 <tbody>')
-    }
 
     for (i in 1:nrow(ptab)) {
         newsection <- (!is.null(ptab$type) && !is.na(ptab$type[i]) && (i == 1 || ptab$type[i] != ptab$type[i-1]))
@@ -333,14 +366,17 @@ generate.parameter.table.HTML <- function(
             cat(parameter.estimate.table.section(label, ncolumns=ncolumns), '\n')
         }
         args <- c(ptab[i,], list(na=na, digits=digits))
+        if (!have.shrinkage) {
+            args$shrinkage <- NULL
+        }
         cat(do.call(parameter.estimate.table.row, args), '\n')
     }
 
     cat('</tbody>
 </table>
-<small>
+<p><small>
 Objective function value: ', nm_output$ofv, '. 
-</small>
+</small></p>
 ', sep="")
 }
 
