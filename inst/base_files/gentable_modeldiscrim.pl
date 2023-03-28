@@ -95,6 +95,8 @@ for my $i (0..$#{$mod}) {
             $converged = 1 if /OPTIMIZATION WAS COMPLETED/;
             $converged = 1 if /BURN-IN WAS NOT TESTED FOR CONVERGENCE/;
             $converged = 1 if /REDUCED STOCHASTIC PORTION WAS COMPLETED/;                                     
+            ($mod->[$i]{'Tot_Obs'}) = ($_ =~ /:\s*(\d*)/) if /TOT\. NO\. OF OBS RECS/;
+            ($mod->[$i]{'Tot_N'}) = ($_ =~ /:\s*(\d*)/) if /TOT\. NO\. OF INDIVIDUALS/;
         }
     }
 
